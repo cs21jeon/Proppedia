@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
+import 'package:printing/printing.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/data/dto/building_dto.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/providers/map_provider.dart';
+import 'package:propedia/presentation/providers/pdf_provider.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -91,13 +93,206 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(buildingSearchProvider);
+    final pdfState = ref.watch(pdfProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('검색 결과'),
+        actions: [
+          // PDF 버튼
+          if (searchState.status == SearchStatus.success && searchState.result != null)
+            IconButton(
+              icon: pdfState.status == PdfStatus.loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.picture_as_pdf),
+              tooltip: 'PDF 저장',
+              onPressed: pdfState.status == PdfStatus.loading
+                  ? null
+                  : () => _showPdfOptions(context, searchState.result!),
+            ),
+        ],
       ),
       body: _buildBody(context, searchState),
     );
+  }
+
+  /// PDF 옵션 Bottom Sheet
+  void _showPdfOptions(BuildContext context, BuildingSearchResponse data) {
+    final areaInfoState = ref.read(areaInfoProvider);
+    final areaInfo = areaInfoState.status == SearchStatus.success ? areaInfoState.areaInfo : null;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 핸들
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // 제목
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Text(
+                      'PDF 내보내기',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(),
+
+              // 미리보기
+              ListTile(
+                leading: const Icon(Icons.preview),
+                title: const Text('미리보기'),
+                subtitle: const Text('PDF를 미리 확인합니다'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _previewPdf(data, areaInfo);
+                },
+              ),
+
+              // 저장
+              ListTile(
+                leading: const Icon(Icons.save_alt),
+                title: const Text('저장'),
+                subtitle: const Text('기기에 PDF 파일을 저장합니다'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _savePdf(data, areaInfo);
+                },
+              ),
+
+              // 공유
+              ListTile(
+                leading: const Icon(Icons.share),
+                title: const Text('공유'),
+                subtitle: const Text('다른 앱으로 PDF를 공유합니다'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _sharePdf(data, areaInfo);
+                },
+              ),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// PDF 미리보기
+  Future<void> _previewPdf(BuildingSearchResponse data, AreaInfo? areaInfo) async {
+    final notifier = ref.read(pdfProvider.notifier);
+
+    // PDF 생성
+    await notifier.generatePdf(data: data, areaInfo: areaInfo);
+
+    final state = ref.read(pdfProvider);
+    if (state.status == PdfStatus.success && state.pdfBytes != null) {
+      // printing 패키지의 미리보기 사용
+      await Printing.layoutPdf(
+        onLayout: (_) async => state.pdfBytes!,
+        name: '부동산정보.pdf',
+      );
+    } else if (state.status == PdfStatus.error && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage ?? 'PDF 생성 실패'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// PDF 저장
+  Future<void> _savePdf(BuildingSearchResponse data, AreaInfo? areaInfo) async {
+    final notifier = ref.read(pdfProvider.notifier);
+
+    // PDF 생성
+    await notifier.generatePdf(data: data, areaInfo: areaInfo);
+
+    final state = ref.read(pdfProvider);
+    if (state.status == PdfStatus.success) {
+      final result = await notifier.savePdf();
+      if (mounted) {
+        if (result != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(kIsWeb ? result : 'PDF 저장 완료: $result'),
+              backgroundColor: Colors.green,
+              action: kIsWeb
+                  ? null
+                  : SnackBarAction(
+                      label: '확인',
+                      textColor: Colors.white,
+                      onPressed: () {},
+                    ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PDF 저장 실패'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else if (state.status == PdfStatus.error && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage ?? 'PDF 생성 실패'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// PDF 공유
+  Future<void> _sharePdf(BuildingSearchResponse data, AreaInfo? areaInfo) async {
+    final notifier = ref.read(pdfProvider.notifier);
+
+    // PDF 생성
+    await notifier.generatePdf(data: data, areaInfo: areaInfo);
+
+    final state = ref.read(pdfProvider);
+    if (state.status == PdfStatus.success) {
+      await notifier.sharePdf();
+    } else if (state.status == PdfStatus.error && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage ?? 'PDF 생성 실패'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildBody(BuildContext context, BuildingSearchState state) {
@@ -152,7 +347,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
           // 3. 건물 정보
           if (building != null && building.hasData && !isLandWithHousePrice)
-            _buildBuildingInfoCard(context, building),
+            _buildBuildingInfoCard(context, building, result.land),
 
           // 3-1. 층별개요 (일반건축물일 경우)
           if (building != null && building.hasData && building.type == 'general' && building.floorInfo != null && building.floorInfo!.isNotEmpty) ...[
@@ -327,7 +522,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   }
 
   /// 3. 건물 정보 카드
-  Widget _buildBuildingInfoCard(BuildContext context, BuildingInfo building) {
+  Widget _buildBuildingInfoCard(BuildContext context, BuildingInfo building, LandInfo? land) {
     final info = building.buildingInfo;
     final recapTitleInfo = building.recapTitleInfo;
     final isMultiUnit = building.type == 'multi_unit';
@@ -339,22 +534,36 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     double? vlRatEstmTotArea = (recapTitleInfo?['vl_rat_estm_tot_area'] as num?)?.toDouble() ?? info?.vlRatEstmTotArea;
     double? buildingCoverage = (recapTitleInfo?['building_coverage'] as num?)?.toDouble() ?? info?.buildingCoverage;
     double? floorAreaRatio = (recapTitleInfo?['floor_area_ratio'] as num?)?.toDouble() ?? info?.floorAreaRatio;
+    double? height = (recapTitleInfo?['height'] as num?)?.toDouble() ?? info?.height;
     String? mainPurpose = recapTitleInfo?['main_purpose'] as String? ?? info?.mainPurpose;
     String? useApprovalDate = recapTitleInfo?['use_approval_date'] as String? ?? info?.useApprovalDate;
     String? totalParking = recapTitleInfo?['total_parking']?.toString() ?? info?.totalParking;
+    int? elevatorCount = (recapTitleInfo?['elevator_count'] as num?)?.toInt() ?? info?.elevatorCount;
 
     // 총건물수 (공동주택)
     int mainBldCnt = (recapTitleInfo?['main_bld_cnt'] as int?) ?? 1;
 
-    // 총 세대/가구/호
+    // 세대/가구/호
     int totalHhld = (recapTitleInfo?['total_hhld_cnt'] as int?) ?? (recapTitleInfo?['hhld_cnt'] as int?) ?? info?.hhldCnt ?? 0;
     int totalFmly = (recapTitleInfo?['total_fmly_cnt'] as int?) ?? (recapTitleInfo?['family_cnt'] as int?) ?? info?.familyCnt ?? 0;
     int totalHo = (recapTitleInfo?['total_ho_cnt'] as int?) ?? (recapTitleInfo?['ho_cnt'] as int?) ?? info?.hoCnt ?? 0;
 
-    // 층수 (일반 건축물)
-    int? totalFloors = info?.totalFloors;
-    int? basementFloors = info?.basementFloors;
+    // 층수
+    int? totalFloors = (recapTitleInfo?['total_floors'] as num?)?.toInt() ?? info?.totalFloors;
+    int? basementFloors = (recapTitleInfo?['basement_floors'] as num?)?.toInt() ?? info?.basementFloors;
     String? mainStructure = info?.mainStructure;
+
+    // 필지 수
+    int? parcelCount = land?.parcelCount;
+
+    // 대지면적 텍스트 (필지 수 포함)
+    String? landAreaText;
+    if (landArea != null) {
+      landAreaText = '${_formatNumber(landArea)} ㎡ (${_sqmToPyeong(landArea)} 평)';
+      if (parcelCount != null && parcelCount > 1) {
+        landAreaText += ' [$parcelCount필지]';
+      }
+    }
 
     // 주택공시가격 포맷
     String housePriceText;
@@ -382,8 +591,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ),
             const Divider(height: 24),
 
-            if (landArea != null)
-              _buildInfoRow('대지면적', '${_formatNumber(landArea)} ㎡ (${_sqmToPyeong(landArea)} 평)'),
+            if (landAreaText != null)
+              _buildInfoRow('대지면적', landAreaText),
             if (buildingArea != null)
               _buildInfoRow('건축면적', '${_formatNumber(buildingArea)} ㎡ (${_sqmToPyeong(buildingArea)} 평)'),
             if (totalArea != null)
@@ -396,22 +605,30 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             if (floorAreaRatio != null)
               _buildInfoRow('용적률', '${floorAreaRatio.toStringAsFixed(2)}%'),
 
+            // 층수 (모든 건물 타입에서 표시)
+            if (totalFloors != null || basementFloors != null)
+              _buildInfoRow('층수', '지상 ${totalFloors ?? 0}층 / 지하 ${basementFloors ?? 0}층'),
+
+            // 높이
+            if (height != null && height > 0)
+              _buildInfoRow('높이', '${height}m'),
+
             // 공동주택: 총건물수
             if (isMultiUnit)
               _buildInfoRow('총건물수', '$mainBldCnt개'),
 
-            // 일반건축물: 층수, 주구조
-            if (!isMultiUnit && (totalFloors != null || basementFloors != null))
-              _buildInfoRow('층수', '지상 ${totalFloors ?? 0}층 / 지하 ${basementFloors ?? 0}층'),
-
-            // 총 세대/가구/호
-            _buildInfoRow('총 세대/가구/호', _formatTotalUnits(totalHhld, totalFmly, totalHo)),
+            // 세대/가구/호
+            _buildInfoRow('세대/가구/호', _formatTotalUnits(totalHhld, totalFmly, totalHo)),
 
             if (!isMultiUnit && mainStructure != null && mainStructure != '-')
               _buildInfoRow('주구조', mainStructure),
 
             if (totalParking != null && totalParking != '-' && totalParking.isNotEmpty)
               _buildInfoRow('총주차대수', '$totalParking대'),
+
+            // 승강기수
+            if (elevatorCount != null && elevatorCount > 0)
+              _buildInfoRow('승강기수', '$elevatorCount기'),
 
             if (mainPurpose != null && mainPurpose != '-')
               _buildInfoRow('주용도', mainPurpose),
@@ -469,15 +686,17 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   /// 층별개요 카드
   Widget _buildFloorInfoCard(BuildContext context, List<FloorInfo> floorInfoList) {
-    // 지상/지하 구분하여 정렬
+    // 정렬: 지하(높은순) → 지상(낮은순) → 옥탑(낮은순)
+    // 예: 지하2층 → 지하1층 → 1층 → 2층 → ... → 8층 → 옥탑1층 → 옥탑2층
     final undergroundFloors = floorInfoList.where((f) => f.floorGb == '지하').toList();
-    final aboveGroundFloors = floorInfoList.where((f) => f.floorGb != '지하').toList();
+    final aboveGroundFloors = floorInfoList.where((f) => f.floorGb == '지상').toList();
+    final rooftopFloors = floorInfoList.where((f) => f.floorGb == '옥탑').toList();
 
-    // 지상층은 역순으로 (높은 층이 위에), 지하층은 정순으로 (깊은 층이 아래에)
-    aboveGroundFloors.sort((a, b) => (b.floorNo ?? 0).compareTo(a.floorNo ?? 0));
-    undergroundFloors.sort((a, b) => (b.floorNo ?? 0).compareTo(a.floorNo ?? 0));
+    undergroundFloors.sort((a, b) => (b.floorNo ?? 0).compareTo(a.floorNo ?? 0)); // 내림차순 (2→1)
+    aboveGroundFloors.sort((a, b) => (a.floorNo ?? 0).compareTo(b.floorNo ?? 0)); // 오름차순 (1→2→3)
+    rooftopFloors.sort((a, b) => (a.floorNo ?? 0).compareTo(b.floorNo ?? 0)); // 오름차순 (1→2)
 
-    final sortedFloors = [...aboveGroundFloors, ...undergroundFloors];
+    final sortedFloors = [...undergroundFloors, ...aboveGroundFloors, ...rooftopFloors];
 
     return Card(
       child: Padding(
@@ -933,10 +1152,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   }
 
   String _formatTotalUnits(int hhld, int fmly, int ho) {
-    final hhldDisplay = hhld == 0 ? '-' : hhld.toString();
-    final fmlyDisplay = fmly == 0 ? '-' : fmly.toString();
-    final hoDisplay = ho == 0 ? '-' : ho.toString();
-    return '$hhldDisplay/$fmlyDisplay/$hoDisplay';
+    // 0도 그대로 표시 (웹앱과 동일)
+    return '$hhld/$fmly/$ho';
   }
 }
 
