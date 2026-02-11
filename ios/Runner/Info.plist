@@ -50,8 +50,8 @@
 	<string>지도에서 현재 위치를 표시하기 위해 위치 정보가 필요합니다.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>지도에서 현재 위치를 표시하기 위해 위치 정보가 필요합니다.</string>
-	<!-- 카카오맵 API 키 -->
+	<!-- 카카오맵 API 키 (Secrets.xcconfig에서 로드) -->
 	<key>KAKAO_NATIVE_APP_KEY</key>
-	<string>3266241e4a3e92344507833c67d2c158</string>
+	<string>$(KAKAO_NATIVE_APP_KEY)</string>
 </dict>
 </plist>

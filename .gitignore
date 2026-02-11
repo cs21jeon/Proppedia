@@ -2,6 +2,13 @@
 .claude/
 .mcp.json
 
+# Environment variables
+.env
+*.env.local
+
+# iOS Secrets
+ios/Flutter/Secrets.xcconfig
+
 # Miscellaneous
 *.class
 *.log
