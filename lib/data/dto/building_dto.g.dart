@@ -393,6 +393,8 @@ _$AreaInfoImpl _$$AreaInfoImplFromJson(Map<String, dynamic> json) =>
       housePrice: (json['house_price'] as num?)?.toInt(),
       housePriceYear: json['house_price_year'] as String?,
       housePriceMonth: json['house_price_month'] as String?,
+      mainPurpose: json['main_purpose'] as String?,
+      etcPurpose: json['etc_purpose'] as String?,
       dongTitleInfo: json['dong_title_info'] as Map<String, dynamic>?,
     );
 
@@ -411,6 +413,8 @@ Map<String, dynamic> _$$AreaInfoImplToJson(_$AreaInfoImpl instance) =>
       'house_price': instance.housePrice,
       'house_price_year': instance.housePriceYear,
       'house_price_month': instance.housePriceMonth,
+      'main_purpose': instance.mainPurpose,
+      'etc_purpose': instance.etcPurpose,
       'dong_title_info': instance.dongTitleInfo,
     };
 

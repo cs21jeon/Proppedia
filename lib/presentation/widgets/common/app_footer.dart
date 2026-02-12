@@ -1,0 +1,154 @@
+import 'package:flutter/material.dart';
+
+/// 간단한 Footer - 홈/검색 화면용
+class AppFooterSimple extends StatelessWidget {
+  const AppFooterSimple({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey[200]!),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/images/proppedia_icon.png',
+              height: 13,
+              errorBuilder: (context, error, stackTrace) =>
+                  Icon(Icons.home, size: 13, color: Colors.grey[400]),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Proppedia 제공',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[500],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '|',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[400],
+              ),
+            ),
+            const SizedBox(width: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Image.asset(
+                'assets/images/goldenrabbit_icon.png',
+                height: 13,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.business, size: 13, color: Colors.grey[400]),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                '금토끼부동산 제작',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey[500],
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 안내문구가 포함된 Footer - 결과 화면용 (현재 미사용)
+class AppFooterWithDisclaimer extends StatelessWidget {
+  const AppFooterWithDisclaimer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          border: Border(
+            top: BorderSide(color: Colors.grey[200]!),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 안내문구
+            Text(
+              '본 자료는 공공데이터포털 및 VWorld를 기반으로 생성되었습니다.\n오류가 있을 수 있으니 정확한 정보는 공적장부를 참고하세요.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.grey[500],
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 로고
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/proppedia_icon.png',
+                  height: 13,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(Icons.home, size: 13, color: Colors.grey[400]),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Proppedia 제공',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '|',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: Image.asset(
+                    'assets/images/goldenrabbit_icon.png',
+                    height: 13,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Icon(Icons.business, size: 13, color: Colors.grey[400]),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '금토끼부동산 제작',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

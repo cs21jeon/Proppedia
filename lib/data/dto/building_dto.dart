@@ -312,6 +312,8 @@ class AreaInfo with _$AreaInfo {
     @JsonKey(name: 'house_price') int? housePrice,
     @JsonKey(name: 'house_price_year') String? housePriceYear,
     @JsonKey(name: 'house_price_month') String? housePriceMonth,
+    @JsonKey(name: 'main_purpose') String? mainPurpose,
+    @JsonKey(name: 'etc_purpose') String? etcPurpose,
     @JsonKey(name: 'dong_title_info') Map<String, dynamic>? dongTitleInfo,
   }) = _AreaInfo;
 

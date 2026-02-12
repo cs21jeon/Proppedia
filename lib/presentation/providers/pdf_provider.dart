@@ -43,6 +43,7 @@ class PdfState {
 class PdfNotifier extends StateNotifier<PdfState> {
   final Ref _ref;
   final NaverMapApi _naverMapApi;
+  String? _currentFileName;
 
   PdfNotifier(this._ref)
       : _naverMapApi = NaverMapApi(),
@@ -59,6 +60,9 @@ class PdfNotifier extends StateNotifier<PdfState> {
       // 1. 좌표 가져오기 (지오코딩)
       Uint8List? mapImage;
       final address = _getAddress(data);
+
+      // 파일명 생성 (지번 + 동/호 정보)
+      _currentFileName = _buildFileName(data, areaInfo);
 
       if (address.isNotEmpty && _naverMapApi.isConfigured) {
         final geocoding = await _ref.read(geocodingProvider(address).future);
@@ -144,6 +148,7 @@ class PdfNotifier extends StateNotifier<PdfState> {
 
   /// 상태 초기화
   void reset() {
+    _currentFileName = null;
     state = const PdfState();
   }
 
@@ -164,12 +169,107 @@ class PdfNotifier extends StateNotifier<PdfState> {
     }
   }
 
-  /// 파일명 생성
+  /// 파일명 생성 (부동산백과_지번_동_호_날짜시간.pdf)
   String _generateFileName() {
+    return _currentFileName ?? _buildDefaultFileName();
+  }
+
+  /// 기본 파일명 생성
+  String _buildDefaultFileName() {
     final now = DateTime.now();
     final timestamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
-        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-    return '부동산정보_$timestamp.pdf';
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+    return 'Proppedia_$timestamp.pdf';
+  }
+
+  /// 파일명 생성 (지번 + 동/호 정보 포함)
+  String _buildFileName(BuildingSearchResponse data, AreaInfo? areaInfo) {
+    final now = DateTime.now();
+    final timestamp = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+
+    // 지번 추출
+    final jibun = _extractJibun(data);
+
+    // 공동주택인 경우 동/호 정보 추가
+    final isMultiUnit = data.building?.type == 'multi_unit';
+    String dongHoInfo = '';
+
+    if (isMultiUnit && areaInfo != null) {
+      // 동 정보
+      final dongNm = areaInfo.dongNm;
+      final dongPart = (dongNm != null && dongNm.isNotEmpty && dongNm != '-')
+          ? dongNm
+          : '동없음';
+
+      // 호 정보
+      final hoNm = areaInfo.hoNm;
+      final hoPart = (hoNm != null && hoNm.isNotEmpty && hoNm != '-')
+          ? hoNm
+          : '호없음';
+
+      dongHoInfo = '_${_sanitize(dongPart)}_${_sanitize(hoPart)}';
+    }
+
+    if (jibun != null) {
+      return 'Proppedia_$jibun$dongHoInfo\_$timestamp.pdf';
+    } else {
+      return 'Proppedia$dongHoInfo\_$timestamp.pdf';
+    }
+  }
+
+  /// 지번 추출 (동+번지)
+  String? _extractJibun(BuildingSearchResponse data) {
+    final buildingInfo = data.building?.buildingInfo;
+    final recapInfo = data.building?.recapTitleInfo;
+    final address = data.address;
+    final codes = data.codes;
+
+    // 1. 동 이름 가져오기
+    String? dongName = address?.eupmyeondongName;
+
+    // 2. 번지 가져오기
+    String? bun;
+    String? ji;
+
+    // PNU에서 번지 추출 시도
+    if (codes?.pnu != null && codes!.pnu!.length >= 19) {
+      bun = int.tryParse(codes.pnu!.substring(11, 15))?.toString();
+      ji = int.tryParse(codes.pnu!.substring(15, 19))?.toString();
+    }
+
+    // recapTitleInfo에서 번지 추출 시도
+    if ((bun == null || bun.isEmpty) && recapInfo != null) {
+      bun = recapInfo['bun']?.toString() ?? recapInfo['main_lot_no']?.toString();
+      ji = recapInfo['ji']?.toString() ?? recapInfo['sub_lot_no']?.toString();
+    }
+
+    // platPlc에서 동과 번지 추출 시도
+    if (dongName == null || bun == null) {
+      String? platPlc = recapInfo?['plat_plc'] as String? ?? buildingInfo?.platPlc;
+      if (platPlc != null && platPlc.isNotEmpty && platPlc != '-') {
+        final match = RegExp(r'(\S+[동읍면리])\s*(\d+)(?:-(\d+))?').firstMatch(platPlc);
+        if (match != null) {
+          dongName ??= match.group(1);
+          bun ??= match.group(2);
+          ji ??= match.group(3);
+        }
+      }
+    }
+
+    if (dongName == null || bun == null) return null;
+
+    final safeDongName = _sanitize(dongName);
+    final jibun = (ji != null && ji.isNotEmpty && ji != '0')
+        ? '$safeDongName$bun-$ji'
+        : '$safeDongName$bun';
+
+    return jibun;
+  }
+
+  /// 파일명에 사용할 수 없는 문자 제거
+  String _sanitize(String input) {
+    return input.replaceAll(RegExp(r'[\\/:*?"<>|]'), '');
   }
 
   /// 주소 문자열 생성

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
+import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class SearchRoadScreen extends ConsumerStatefulWidget {
   const SearchRoadScreen({super.key});
@@ -84,6 +85,7 @@ class _SearchRoadScreenState extends ConsumerState<SearchRoadScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const AppFooterSimple(),
     );
   }
 

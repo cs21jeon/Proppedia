@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -25,6 +26,30 @@ class PdfGenerator {
   static const PdfColor _colorBorder = PdfColor.fromInt(0xFFE2E8F0);
   static const PdfColor _colorWhite = PdfColors.white;
 
+  // 로고 이미지 캐시
+  static Uint8List? _proppediaLogo;
+  static Uint8List? _goldenrabbitLogo;
+
+  /// 로고 이미지 로드
+  static Future<void> _loadLogos() async {
+    if (_proppediaLogo == null) {
+      try {
+        final data = await rootBundle.load('assets/images/proppedia_logo.png');
+        _proppediaLogo = data.buffer.asUint8List();
+      } catch (e) {
+        // 로고 로드 실패 시 무시
+      }
+    }
+    if (_goldenrabbitLogo == null) {
+      try {
+        final data = await rootBundle.load('assets/images/goldenrabbit_icon.png');
+        _goldenrabbitLogo = data.buffer.asUint8List();
+      } catch (e) {
+        // 로고 로드 실패 시 무시
+      }
+    }
+  }
+
   /// 부동산 정보 PDF를 생성합니다.
   static Future<Uint8List> generatePropertyPdf({
     required BuildingSearchResponse data,
@@ -32,6 +57,7 @@ class PdfGenerator {
     Uint8List? mapImage,
   }) async {
     await _fonts.load();
+    await _loadLogos();
 
     final pdf = pw.Document();
 
@@ -93,12 +119,15 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                   children: [
-                    if (areaInfo != null)
-                      _buildAreaInfoSection(areaInfo, rightColumnWidth)
-                    else if (data.building?.type == 'general' &&
-                        data.building?.floorInfo != null)
+                    if (areaInfo != null) ...[
+                      _buildAreaInfoSection(areaInfo, rightColumnWidth),
+                      pw.SizedBox(height: _sectionGap),
+                    ] else if (data.building?.type == 'general' &&
+                        data.building?.floorInfo != null) ...[
                       _buildFloorInfoSection(data.building!.floorInfo!, rightColumnWidth),
-                    pw.SizedBox(height: _sectionGap),
+                      pw.SizedBox(height: _sectionGap),
+                    ],
+                    // 토지만 있는 경우(건물 없음) 지도 섹션의 상단을 기본정보와 맞춤
                     pw.Expanded(
                       child: _buildMapSection(mapImage, data, rightColumnWidth),
                     ),
@@ -630,16 +659,45 @@ class PdfGenerator {
 
   /// 푸터
   static pw.Widget _buildFooter() {
-    return pw.Column(
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Text(
-          '본 자료는 공공데이터포털 및 VWorld API를 기반으로 생성되었습니다.',
-          style: _fonts.style(fontSize: 7, color: _colorGray),
+        // 좌측: 안내문구
+        pw.Expanded(
+          child: pw.Text(
+            '본 자료는 공공데이터포털 및 VWorld API를 기반으로 생성되었습니다. 오류가 있을 수 있으니 정확한 정보는 공적장부를 참고하세요.',
+            style: _fonts.style(fontSize: 6, color: _colorGray),
+          ),
         ),
-        pw.SizedBox(height: 2),
-        pw.Text(
-          '부동산 정보 조회 앱 - goldenrabbit.biz',
-          style: _fonts.style(fontSize: 8, isBold: true, color: _colorDark),
+        pw.SizedBox(width: 16),
+        // 우측: 로고 및 제공처
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            if (_proppediaLogo != null)
+              pw.Image(pw.MemoryImage(_proppediaLogo!), height: 13),
+            if (_proppediaLogo != null) pw.SizedBox(width: 4),
+            pw.Text(
+              'Proppedia 제공',
+              style: _fonts.style(fontSize: 7, isBold: true, color: _colorPrimary),
+            ),
+            pw.SizedBox(width: 6),
+            pw.Text('|', style: _fonts.style(fontSize: 7, color: _colorGray)),
+            pw.SizedBox(width: 6),
+            if (_goldenrabbitLogo != null)
+              pw.ClipRRect(
+                horizontalRadius: 2,
+                verticalRadius: 2,
+                child: pw.Image(pw.MemoryImage(_goldenrabbitLogo!), height: 13),
+              ),
+            if (_goldenrabbitLogo != null) pw.SizedBox(width: 4),
+            pw.Text(
+              '금토끼부동산 제작',
+              style: _fonts.style(fontSize: 7, isBold: true, color: _colorDark),
+            ),
+            pw.Text('   https://goldenrabbit.biz', style: _fonts.style(fontSize: 7, color: _colorGray)),
+          ],
         ),
       ],
     );

@@ -103,26 +103,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 60),
                 // 로고
-                const Icon(
-                  Icons.home_work_rounded,
-                  size: 64,
-                  color: AppColors.primary,
+                Image.asset(
+                  'assets/images/proppedia_logo.png',
+                  width: 140,
+                  height: 140,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
                 Text(
-                  'Propedia',
+                  'Proppedia',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   '부동산백과',
                   textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700],
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '세상 편한 부동산 조회',
+                  textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
+                        color: Colors.grey[500],
                       ),
                 ),
                 const SizedBox(height: 48),
@@ -185,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // 로그인 버튼
                 SizedBox(
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(

@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
-import 'package:printing/printing.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/data/dto/building_dto.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/providers/map_provider.dart';
 import 'package:propedia/presentation/providers/pdf_provider.dart';
+import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -94,13 +94,21 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   Widget build(BuildContext context) {
     final searchState = ref.watch(buildingSearchProvider);
     final pdfState = ref.watch(pdfProvider);
+    final areaInfoState = ref.watch(areaInfoProvider);
+
+    // 공동주택 여부 확인
+    final isMultiUnit = searchState.result?.building?.type == 'multi_unit';
+    // 공동주택이면 areaInfo가 있어야 PDF 가능
+    final canShowPdf = searchState.status == SearchStatus.success &&
+        searchState.result != null &&
+        (!isMultiUnit || areaInfoState.status == SearchStatus.success);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('검색 결과'),
         actions: [
-          // PDF 버튼
-          if (searchState.status == SearchStatus.success && searchState.result != null)
+          // PDF 버튼 (공동주택은 동/호 선택 후에만 활성화)
+          if (canShowPdf)
             IconButton(
               icon: pdfState.status == PdfStatus.loading
                   ? const SizedBox(
@@ -217,10 +225,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final state = ref.read(pdfProvider);
     if (state.status == PdfStatus.success && state.pdfBytes != null) {
       // printing 패키지의 미리보기 사용
-      await Printing.layoutPdf(
-        onLayout: (_) async => state.pdfBytes!,
-        name: '부동산정보.pdf',
-      );
+      await notifier.previewPdf();
     } else if (state.status == PdfStatus.error && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -247,13 +252,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             SnackBar(
               content: Text(kIsWeb ? result : 'PDF 저장 완료: $result'),
               backgroundColor: Colors.green,
-              action: kIsWeb
-                  ? null
-                  : SnackBarAction(
-                      label: '확인',
-                      textColor: Colors.white,
-                      onPressed: () {},
-                    ),
+              duration: const Duration(seconds: 3),
             ),
           );
         } else {
@@ -368,8 +367,83 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           // 5. 지도
           const SizedBox(height: 16),
           _buildMapSection(context, result),
+
+          // 6. 안내문구
+          const SizedBox(height: 24),
+          _buildDisclaimerSection(context),
         ],
         ),
+      ),
+    );
+  }
+
+  /// 6. 안내문구 섹션
+  Widget _buildDisclaimerSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            '본 자료는 공공데이터포털 및\nVWorld를 기반으로 생성되었습니다.',
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '오류가 있을 수 있으니\n정확한 정보는 공적장부를 참고하세요.',
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          // 로고 영역
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/proppedia_icon.png',
+                height: 14,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.home, size: 14, color: Colors.grey[400]),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Proppedia 제공',
+                style: TextStyle(fontSize: 10, color: Colors.grey[700], fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '|',
+                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+              ),
+              const SizedBox(width: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: Image.asset(
+                  'assets/images/goldenrabbit_icon.png',
+                  height: 14,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(Icons.business, size: 14, color: Colors.grey[400]),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '금토끼부동산 제작',
+                style: TextStyle(fontSize: 10, color: Colors.grey[700], fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'https://goldenrabbit.biz',
+            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+          ),
+        ],
       ),
     );
   }
@@ -605,17 +679,17 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             if (floorAreaRatio != null)
               _buildInfoRow('용적률', '${floorAreaRatio.toStringAsFixed(2)}%'),
 
-            // 층수 (모든 건물 타입에서 표시)
-            if (totalFloors != null || basementFloors != null)
-              _buildInfoRow('층수', '지상 ${totalFloors ?? 0}층 / 지하 ${basementFloors ?? 0}층'),
-
-            // 높이
-            if (height != null && height > 0)
-              _buildInfoRow('높이', '${height}m'),
-
             // 공동주택: 총건물수
             if (isMultiUnit)
               _buildInfoRow('총건물수', '$mainBldCnt개'),
+
+            // 층수 (공동주택 여러동인 경우 숨김 - 해당동 정보에서 표시)
+            if (!(isMultiUnit && mainBldCnt > 1) && (totalFloors != null || basementFloors != null))
+              _buildInfoRow('층수', '지상 ${totalFloors ?? 0}층 / 지하 ${basementFloors ?? 0}층'),
+
+            // 높이 (공동주택 여러동인 경우 숨김 - 해당동 정보에서 표시)
+            if (!(isMultiUnit && mainBldCnt > 1) && height != null && height > 0)
+              _buildInfoRow('높이', '${height}m'),
 
             // 세대/가구/호
             _buildInfoRow('세대/가구/호', _formatTotalUnits(totalHhld, totalFmly, totalHo)),
@@ -626,8 +700,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             if (totalParking != null && totalParking != '-' && totalParking.isNotEmpty)
               _buildInfoRow('총주차대수', '$totalParking대'),
 
-            // 승강기수
-            if (elevatorCount != null && elevatorCount > 0)
+            // 승강기수 (공동주택 여러동인 경우 숨김 - 해당동 정보에서 표시)
+            if (!(isMultiUnit && mainBldCnt > 1) && elevatorCount != null && elevatorCount > 0)
               _buildInfoRow('승강기수', '$elevatorCount기'),
 
             if (mainPurpose != null && mainPurpose != '-')

@@ -4448,6 +4448,10 @@ mixin _$AreaInfo {
   String? get housePriceYear => throw _privateConstructorUsedError;
   @JsonKey(name: 'house_price_month')
   String? get housePriceMonth => throw _privateConstructorUsedError;
+  @JsonKey(name: 'main_purpose')
+  String? get mainPurpose => throw _privateConstructorUsedError;
+  @JsonKey(name: 'etc_purpose')
+  String? get etcPurpose => throw _privateConstructorUsedError;
   @JsonKey(name: 'dong_title_info')
   Map<String, dynamic>? get dongTitleInfo => throw _privateConstructorUsedError;
 
@@ -4476,6 +4480,8 @@ abstract class $AreaInfoCopyWith<$Res> {
       @JsonKey(name: 'house_price') int? housePrice,
       @JsonKey(name: 'house_price_year') String? housePriceYear,
       @JsonKey(name: 'house_price_month') String? housePriceMonth,
+      @JsonKey(name: 'main_purpose') String? mainPurpose,
+      @JsonKey(name: 'etc_purpose') String? etcPurpose,
       @JsonKey(name: 'dong_title_info') Map<String, dynamic>? dongTitleInfo});
 }
 
@@ -4505,6 +4511,8 @@ class _$AreaInfoCopyWithImpl<$Res, $Val extends AreaInfo>
     Object? housePrice = freezed,
     Object? housePriceYear = freezed,
     Object? housePriceMonth = freezed,
+    Object? mainPurpose = freezed,
+    Object? etcPurpose = freezed,
     Object? dongTitleInfo = freezed,
   }) {
     return _then(_value.copyWith(
@@ -4560,6 +4568,14 @@ class _$AreaInfoCopyWithImpl<$Res, $Val extends AreaInfo>
           ? _value.housePriceMonth
           : housePriceMonth // ignore: cast_nullable_to_non_nullable
               as String?,
+      mainPurpose: freezed == mainPurpose
+          ? _value.mainPurpose
+          : mainPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
+      etcPurpose: freezed == etcPurpose
+          ? _value.etcPurpose
+          : etcPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
       dongTitleInfo: freezed == dongTitleInfo
           ? _value.dongTitleInfo
           : dongTitleInfo // ignore: cast_nullable_to_non_nullable
@@ -4590,6 +4606,8 @@ abstract class _$$AreaInfoImplCopyWith<$Res>
       @JsonKey(name: 'house_price') int? housePrice,
       @JsonKey(name: 'house_price_year') String? housePriceYear,
       @JsonKey(name: 'house_price_month') String? housePriceMonth,
+      @JsonKey(name: 'main_purpose') String? mainPurpose,
+      @JsonKey(name: 'etc_purpose') String? etcPurpose,
       @JsonKey(name: 'dong_title_info') Map<String, dynamic>? dongTitleInfo});
 }
 
@@ -4617,6 +4635,8 @@ class __$$AreaInfoImplCopyWithImpl<$Res>
     Object? housePrice = freezed,
     Object? housePriceYear = freezed,
     Object? housePriceMonth = freezed,
+    Object? mainPurpose = freezed,
+    Object? etcPurpose = freezed,
     Object? dongTitleInfo = freezed,
   }) {
     return _then(_$AreaInfoImpl(
@@ -4672,6 +4692,14 @@ class __$$AreaInfoImplCopyWithImpl<$Res>
           ? _value.housePriceMonth
           : housePriceMonth // ignore: cast_nullable_to_non_nullable
               as String?,
+      mainPurpose: freezed == mainPurpose
+          ? _value.mainPurpose
+          : mainPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
+      etcPurpose: freezed == etcPurpose
+          ? _value.etcPurpose
+          : etcPurpose // ignore: cast_nullable_to_non_nullable
+              as String?,
       dongTitleInfo: freezed == dongTitleInfo
           ? _value._dongTitleInfo
           : dongTitleInfo // ignore: cast_nullable_to_non_nullable
@@ -4697,6 +4725,8 @@ class _$AreaInfoImpl implements _AreaInfo {
       @JsonKey(name: 'house_price') this.housePrice,
       @JsonKey(name: 'house_price_year') this.housePriceYear,
       @JsonKey(name: 'house_price_month') this.housePriceMonth,
+      @JsonKey(name: 'main_purpose') this.mainPurpose,
+      @JsonKey(name: 'etc_purpose') this.etcPurpose,
       @JsonKey(name: 'dong_title_info')
       final Map<String, dynamic>? dongTitleInfo})
       : _dongTitleInfo = dongTitleInfo;
@@ -4743,6 +4773,12 @@ class _$AreaInfoImpl implements _AreaInfo {
   @override
   @JsonKey(name: 'house_price_month')
   final String? housePriceMonth;
+  @override
+  @JsonKey(name: 'main_purpose')
+  final String? mainPurpose;
+  @override
+  @JsonKey(name: 'etc_purpose')
+  final String? etcPurpose;
   final Map<String, dynamic>? _dongTitleInfo;
   @override
   @JsonKey(name: 'dong_title_info')
@@ -4756,7 +4792,7 @@ class _$AreaInfoImpl implements _AreaInfo {
 
   @override
   String toString() {
-    return 'AreaInfo(dongNm: $dongNm, hoNm: $hoNm, bldNm: $bldNm, floorNo: $floorNo, floorGb: $floorGb, exclusiveArea: $exclusiveArea, supplyArea: $supplyArea, saleArea: $saleArea, landShare: $landShare, landShareRatio: $landShareRatio, housePrice: $housePrice, housePriceYear: $housePriceYear, housePriceMonth: $housePriceMonth, dongTitleInfo: $dongTitleInfo)';
+    return 'AreaInfo(dongNm: $dongNm, hoNm: $hoNm, bldNm: $bldNm, floorNo: $floorNo, floorGb: $floorGb, exclusiveArea: $exclusiveArea, supplyArea: $supplyArea, saleArea: $saleArea, landShare: $landShare, landShareRatio: $landShareRatio, housePrice: $housePrice, housePriceYear: $housePriceYear, housePriceMonth: $housePriceMonth, mainPurpose: $mainPurpose, etcPurpose: $etcPurpose, dongTitleInfo: $dongTitleInfo)';
   }
 
   @override
@@ -4785,6 +4821,10 @@ class _$AreaInfoImpl implements _AreaInfo {
                 other.housePriceYear == housePriceYear) &&
             (identical(other.housePriceMonth, housePriceMonth) ||
                 other.housePriceMonth == housePriceMonth) &&
+            (identical(other.mainPurpose, mainPurpose) ||
+                other.mainPurpose == mainPurpose) &&
+            (identical(other.etcPurpose, etcPurpose) ||
+                other.etcPurpose == etcPurpose) &&
             const DeepCollectionEquality()
                 .equals(other._dongTitleInfo, _dongTitleInfo));
   }
@@ -4806,6 +4846,8 @@ class _$AreaInfoImpl implements _AreaInfo {
       housePrice,
       housePriceYear,
       housePriceMonth,
+      mainPurpose,
+      etcPurpose,
       const DeepCollectionEquality().hash(_dongTitleInfo));
 
   @JsonKey(ignore: true)
@@ -4837,6 +4879,8 @@ abstract class _AreaInfo implements AreaInfo {
       @JsonKey(name: 'house_price') final int? housePrice,
       @JsonKey(name: 'house_price_year') final String? housePriceYear,
       @JsonKey(name: 'house_price_month') final String? housePriceMonth,
+      @JsonKey(name: 'main_purpose') final String? mainPurpose,
+      @JsonKey(name: 'etc_purpose') final String? etcPurpose,
       @JsonKey(name: 'dong_title_info')
       final Map<String, dynamic>? dongTitleInfo}) = _$AreaInfoImpl;
 
@@ -4882,6 +4926,12 @@ abstract class _AreaInfo implements AreaInfo {
   @override
   @JsonKey(name: 'house_price_month')
   String? get housePriceMonth;
+  @override
+  @JsonKey(name: 'main_purpose')
+  String? get mainPurpose;
+  @override
+  @JsonKey(name: 'etc_purpose')
+  String? get etcPurpose;
   @override
   @JsonKey(name: 'dong_title_info')
   Map<String, dynamic>? get dongTitleInfo;

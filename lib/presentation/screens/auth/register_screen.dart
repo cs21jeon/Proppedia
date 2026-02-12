@@ -197,7 +197,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // 회원가입 버튼
                 SizedBox(
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(

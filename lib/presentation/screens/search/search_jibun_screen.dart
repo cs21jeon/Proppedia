@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/data/dto/building_dto.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
+import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class SearchJibunScreen extends ConsumerStatefulWidget {
   const SearchJibunScreen({super.key});
@@ -70,7 +71,12 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
   }
 
   void _onFocusChange() {
-    if (!_bjdongFocusNode.hasFocus) {
+    if (_bjdongFocusNode.hasFocus) {
+      // 포커스를 받았을 때 기존 검색 결과가 있고 법정동이 선택되지 않았으면 드롭다운 다시 표시
+      if (_bjdongResults.isNotEmpty && _selectedBjdongCode == null) {
+        _showOverlay();
+      }
+    } else {
       // 클릭 이벤트가 처리될 시간을 주기 위해 지연
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted && !_bjdongFocusNode.hasFocus) {
@@ -424,8 +430,8 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 서울시 서초구 사당동 314-21\n'
-                      '  → 법정동: 사당동, 본번: 314, 부번: 21\n\n'
+                      '• 서울시 동작구 사당동 123-45\n'
+                      '  → 법정동: 사당동, 본번: 123, 부번: 45\n\n'
                       '• 서울시 강남구 역삼동 123\n'
                       '  → 법정동: 역삼동, 본번: 123, 부번: (비움)',
                       style: TextStyle(
@@ -441,6 +447,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const AppFooterSimple(),
     );
   }
 

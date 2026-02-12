@@ -6,6 +6,7 @@ import 'package:kakao_map_plugin/kakao_map_plugin.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/providers/map_provider.dart';
+import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class SearchMapScreen extends ConsumerStatefulWidget {
   const SearchMapScreen({super.key});
@@ -208,6 +209,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const AppFooterSimple(),
     );
   }
 
@@ -323,6 +325,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: const AppFooterSimple(),
     );
   }
 
