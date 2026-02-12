@@ -7,7 +7,8 @@ import 'package:propedia/data/dto/building_dto.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/providers/map_provider.dart';
 import 'package:propedia/presentation/providers/pdf_provider.dart';
-import 'package:propedia/presentation/widgets/common/app_footer.dart';
+import 'package:propedia/presentation/providers/history_provider.dart';
+import 'package:propedia/presentation/providers/favorites_provider.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -20,13 +21,68 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   String? _selectedDong;
   String? _selectedHo;
   List<String> _hoList = [];
+  bool _historySaved = false; // 검색 기록 저장 여부
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(areaInfoProvider.notifier).reset();
+      // 즐겨찾기 목록 로드
+      ref.read(favoritesProvider.notifier).loadLocalFavorites();
+      // 검색 상태 변화 감지하여 기록 저장
+      _listenForSearchCompletion();
     });
+  }
+
+  /// 검색 완료 시 기록 저장
+  void _listenForSearchCompletion() {
+    // 현재 상태 체크
+    final currentState = ref.read(buildingSearchProvider);
+    if (currentState.status == SearchStatus.success) {
+      _saveSearchHistory();
+    } else {
+      // 아직 로딩 중이면 상태 변화 감지
+      ref.listenManual(buildingSearchProvider, (previous, next) {
+        if (next.status == SearchStatus.success && !_historySaved) {
+          _saveSearchHistory();
+        }
+      });
+    }
+  }
+
+  /// 검색 기록 저장
+  void _saveSearchHistory() {
+    if (_historySaved) return;
+
+    final searchState = ref.read(buildingSearchProvider);
+    if (searchState.status != SearchStatus.success || searchState.result == null) return;
+
+    final result = searchState.result!;
+    final address = result.address;
+    final building = result.building;
+    final pnu = result.codes?.pnu;
+
+    // 표시용 주소 생성
+    String displayAddress = address?.fullAddress ?? '';
+    if (displayAddress.isEmpty) {
+      displayAddress = building?.buildingInfo?.platPlc ?? '주소 없음';
+    }
+
+    // 검색 타입 (provider에서 가져옴)
+    final searchType = searchState.searchType;
+
+    ref.read(historyProvider.notifier).addHistory(
+      searchType: searchType,
+      displayAddress: displayAddress,
+      roadAddress: building?.buildingInfo?.newPlatPlc,
+      jibunAddress: building?.buildingInfo?.platPlc,
+      buildingName: building?.buildingInfo?.buildingName,
+      pnu: pnu,
+      buildingType: building?.type,
+    );
+
+    _historySaved = true;
   }
 
   void _onDongSelected(String? dong, Map<String, dynamic> dongHoDict) {
@@ -95,6 +151,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final searchState = ref.watch(buildingSearchProvider);
     final pdfState = ref.watch(pdfProvider);
     final areaInfoState = ref.watch(areaInfoProvider);
+    final favoritesState = ref.watch(favoritesProvider);
 
     // 공동주택 여부 확인
     final isMultiUnit = searchState.result?.building?.type == 'multi_unit';
@@ -103,10 +160,28 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         searchState.result != null &&
         (!isMultiUnit || areaInfoState.status == SearchStatus.success);
 
+    // 즐겨찾기 여부 확인
+    final displayAddress = _getDisplayAddress(searchState.result);
+    final isFavorite = displayAddress.isNotEmpty &&
+        favoritesState.localFavorites.any((f) =>
+            f.displayAddress == displayAddress &&
+            f.dongName == _selectedDong &&
+            f.hoName == _selectedHo);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('검색 결과'),
         actions: [
+          // 즐겨찾기 버튼
+          if (searchState.status == SearchStatus.success && searchState.result != null)
+            IconButton(
+              icon: Icon(
+                isFavorite ? Icons.star : Icons.star_border,
+                color: isFavorite ? Colors.amber : null,
+              ),
+              tooltip: isFavorite ? '즐겨찾기 해제' : '즐겨찾기 등록',
+              onPressed: () => _toggleFavorite(searchState.result!, isFavorite),
+            ),
           // PDF 버튼 (공동주택은 동/호 선택 후에만 활성화)
           if (canShowPdf)
             IconButton(
@@ -126,6 +201,68 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       ),
       body: _buildBody(context, searchState),
     );
+  }
+
+  /// 표시용 주소 가져오기
+  String _getDisplayAddress(BuildingSearchResponse? result) {
+    if (result == null) return '';
+    final address = result.address;
+    final building = result.building;
+
+    String displayAddress = address?.fullAddress ?? '';
+    if (displayAddress.isEmpty) {
+      displayAddress = building?.buildingInfo?.platPlc ?? '';
+    }
+    return displayAddress;
+  }
+
+  /// 즐겨찾기 토글
+  Future<void> _toggleFavorite(BuildingSearchResponse result, bool isFavorite) async {
+    final displayAddress = _getDisplayAddress(result);
+    if (displayAddress.isEmpty) return;
+
+    final building = result.building;
+    final pnu = result.codes?.pnu;
+
+    if (isFavorite) {
+      // 즐겨찾기 해제
+      final id = ref.read(favoritesProvider.notifier).findFavoriteId(
+        displayAddress,
+        dongName: _selectedDong,
+        hoName: _selectedHo,
+      );
+      if (id != null) {
+        await ref.read(favoritesProvider.notifier).deleteFavorite(id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('즐겨찾기에서 삭제되었습니다'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } else {
+      // 즐겨찾기 등록
+      await ref.read(favoritesProvider.notifier).addFavorite(
+        displayAddress: displayAddress,
+        roadAddress: building?.buildingInfo?.newPlatPlc,
+        jibunAddress: building?.buildingInfo?.platPlc,
+        buildingName: building?.buildingInfo?.buildingName,
+        pnu: pnu,
+        dongName: _selectedDong,
+        hoName: _selectedHo,
+        buildingType: building?.type,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('즐겨찾기에 등록되었습니다'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// PDF 옵션 Bottom Sheet

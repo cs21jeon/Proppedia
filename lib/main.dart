@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
+import 'package:propedia/core/database/database_service.dart';
 import 'app.dart';
 
 void main() async {
@@ -10,6 +11,9 @@ void main() async {
 
   // 환경변수 로드
   await dotenv.load(fileName: '.env');
+
+  // Hive 데이터베이스 초기화
+  await DatabaseService.init();
 
   // 카카오맵 SDK 초기화 (Web이 아닌 경우에만)
   if (!kIsWeb) {

@@ -104,22 +104,26 @@ class BuildingSearchState {
   final SearchStatus status;
   final BuildingSearchResponse? result;
   final String? errorMessage;
+  final String searchType; // 'road', 'jibun', 'map'
 
   const BuildingSearchState({
     this.status = SearchStatus.initial,
     this.result,
     this.errorMessage,
+    this.searchType = 'jibun',
   });
 
   BuildingSearchState copyWith({
     SearchStatus? status,
     BuildingSearchResponse? result,
     String? errorMessage,
+    String? searchType,
   }) {
     return BuildingSearchState(
       status: status ?? this.status,
       result: result ?? this.result,
       errorMessage: errorMessage,
+      searchType: searchType ?? this.searchType,
     );
   }
 }
@@ -136,8 +140,9 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
     required String bun,
     String ji = '0000',
     String landType = '1',
+    String searchType = 'jibun', // 'jibun' or 'map'
   }) async {
-    state = state.copyWith(status: SearchStatus.loading);
+    state = state.copyWith(status: SearchStatus.loading, searchType: searchType);
 
     try {
       final response = await _repository.searchByJibun(
@@ -150,28 +155,32 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
         state = BuildingSearchState(
           status: SearchStatus.success,
           result: response,
+          searchType: searchType,
         );
       } else {
         state = BuildingSearchState(
           status: SearchStatus.error,
           errorMessage: response.error ?? '검색 결과가 없습니다',
+          searchType: searchType,
         );
       }
     } catch (e) {
       state = BuildingSearchState(
         status: SearchStatus.error,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        searchType: searchType,
       );
     }
   }
 
-  /// 건물관리번호로 검색
+  /// 건물관리번호로 검색 (도로명 검색 결과에서 선택 시 사용)
   Future<void> searchByBdMgtSn(
     String bdMgtSn, {
     String? lnbrMnnm,
     String? lnbrSlno,
+    String searchType = 'road',
   }) async {
-    state = state.copyWith(status: SearchStatus.loading);
+    state = state.copyWith(status: SearchStatus.loading, searchType: searchType);
 
     try {
       final response = await _repository.searchByBdMgtSn(
@@ -183,17 +192,20 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
         state = BuildingSearchState(
           status: SearchStatus.success,
           result: response,
+          searchType: searchType,
         );
       } else {
         state = BuildingSearchState(
           status: SearchStatus.error,
           errorMessage: response.error ?? '검색 결과가 없습니다',
+          searchType: searchType,
         );
       }
     } catch (e) {
       state = BuildingSearchState(
         status: SearchStatus.error,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
+        searchType: searchType,
       );
     }
   }

@@ -505,6 +505,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           bun: jibunInfo.bun,
           ji: jibunInfo.ji,
           landType: jibunInfo.landType,
+          searchType: 'map',
         );
 
     // 결과 화면으로 이동
