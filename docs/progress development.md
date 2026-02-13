@@ -566,43 +566,63 @@
 
 &nbsp; **로고 다크모드 투명 문제**
 &nbsp; - 문제: 로고의 책 부분이 투명 처리되어 다크모드에서 안보임
-&nbsp; - 해결: "fillbook" 버전 로고로 교체 (책 부분 흰색 채움)
-&nbsp; - 교체된 파일: `assets/images/proppedia_logo.png`, `assets/images/proppedia_logo_landscape.png`
+&nbsp; - 해결: "fillbook 01" 버전 로고로 교체 (책 부분 흰색 채움, 사이즈 조정)
+&nbsp; - 서버 소스: `/home/webapp/goldenrabbit/backend/assets/proppedia/logo_proppedia_*_fillbook_logo only 01.png`
+&nbsp; - 교체된 파일: `assets/images/proppedia_logo.png` (179KB), `assets/images/proppedia_logo_landscape.png` (196KB)
 &nbsp; - 영향받는 화면: 로그인, 홈 헤더, PDF
 
 &nbsp; ---
 
 
 
-&nbsp; ## 다음 단계: Phase 7 (매물 정보 조회)
+&nbsp; ## Phase 7: 매물 정보 연동 ✅ 완료 (2026-02-13)
 
 
+### 설계 변경
 
-&nbsp; 구현 예정:
+**기존 계획**: 앱 내에 매물 목록/상세/지도 화면 구현
 
-&nbsp; - Property 모델 정의
-
-&nbsp; - PropertyRepository + PropertyApi 구현
-
-&nbsp; - HomeScreen (매물 검색 인터페이스)
-
-&nbsp; - PropertyListView (카테고리별 매물 목록)
-
-&nbsp; - PropertyCard 위젯
-
-&nbsp; - PropertyDetailScreen (매물 상세)
-
-&nbsp; - 조건 검색 (매가, 수익률, 면적 등)
+**변경된 방향**: 앱스토어 정책 및 서비스 분리 원칙에 따라 변경
+- Proppedia(부동산백과): 순수 부동산 정보 검색 전용
+- 금토끼부동산 매물정보: goldenrabbit.biz 웹사이트로 연동
 
 
+### 구현된 기능:
 
-&nbsp; 연동할 API:
+**햄버거 메뉴 (Drawer) 추가**
+- `lib/presentation/screens/home/home_screen.dart`
+  - 좌측 상단 햄버거 메뉴 버튼 추가
+  - "금토끼부동산 매물정보" → goldenrabbit.biz 외부 링크
+  - "앱 정보" → 앱 정보 다이얼로그
+  - 하단에 금토끼부동산 제작 정보 표시
 
-&nbsp; - GET /api/property-list
 
-&nbsp; - GET /api/category-properties?view=...
+### 서버 API (참고용 - 웹앱에서 사용)
 
-&nbsp; - GET /api/property-detail?id=...
+서버에는 매물 API가 구현되어 있음 (웹앱 goldenrabbit.biz에서 사용):
+- `GET /app/api/properties` - 매물 목록
+- `POST /app/api/properties/search` - 조건 검색
+- `GET /app/api/properties/{id}` - 매물 상세
+- `GET /app/api/properties/{id}/image` - 이미지
+- `POST /app/api/properties/map` - 지도 마커
+
+
+### 삭제된 파일:
+
+앱 내 매물 기능 관련 파일 모두 삭제:
+- `lib/presentation/screens/property/*` (3개 화면)
+- `lib/presentation/providers/property_provider.dart`
+- `lib/data/repositories/property_repository.dart`
+- `lib/data/datasources/remote/property_api.dart`
+- `lib/data/dto/property_dto.dart` 및 생성 파일
+
+
+### 컨셉 유지:
+
+goldenrabbit.biz/app 웹앱과 동일한 구조:
+- 햄버거 메뉴 → "금토끼부동산 매물정보" → goldenrabbit.biz 이동
+- goldenrabbit.biz에서 매물지도/매물검색/추천매물 확인
+- goldenrabbit.biz 햄버거 메뉴에서 다시 앱으로 이동 가능
 
 
 

@@ -34,7 +34,7 @@ class PdfGenerator {
   static Future<void> _loadLogos() async {
     if (_proppediaLogo == null) {
       try {
-        final data = await rootBundle.load('assets/images/proppedia_logo.png');
+        final data = await rootBundle.load('assets/images/proppedia_icon.png');
         _proppediaLogo = data.buffer.asUint8List();
       } catch (e) {
         // 로고 로드 실패 시 무시
