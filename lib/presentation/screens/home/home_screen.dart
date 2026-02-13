@@ -49,33 +49,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('로그아웃'),
-                  content: const Text('정말 로그아웃하시겠습니까?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('취소'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('로그아웃'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirmed == true) {
-                ref.read(authProvider.notifier).logout();
-              }
-            },
-          ),
-        ],
+        // 프로필 버튼은 하단 네비게이션으로 이동
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -188,11 +162,12 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildBottomNavigation(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -219,6 +194,13 @@ class HomeScreen extends ConsumerWidget {
             label: '즐겨찾기',
             isActive: false,
             onTap: () => context.go('/favorites'),
+          ),
+          _buildNavItem(
+            context: context,
+            icon: Icons.person_outline,
+            label: '프로필',
+            isActive: false,
+            onTap: () => context.go('/profile'),
           ),
         ],
       ),

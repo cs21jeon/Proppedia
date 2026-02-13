@@ -136,6 +136,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
   }
 
   OverlayEntry _createOverlayEntry() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return OverlayEntry(
       builder: (context) => Positioned(
         width: MediaQuery.of(context).size.width - 32,
@@ -146,12 +147,15 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(12),
+            color: Theme.of(context).cardColor,
             child: Container(
               constraints: const BoxConstraints(maxHeight: 200),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(
+                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                ),
               ),
               child: ListView.builder(
                 shrinkWrap: true,
@@ -171,7 +175,10 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
                       ),
                       child: Text(
                         item.fullAddress ?? item.eupmyeondongName ?? '',
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
                       ),
                     ),
                   );
@@ -415,7 +422,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -425,7 +432,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
                       '입력 예시',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -436,7 +443,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
                       '  → 법정동: 역삼동, 본번: 123, 부번: (비움)',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         height: 1.5,
                       ),
                     ),
@@ -456,6 +463,7 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
     required String value,
     required bool isSelected,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return OutlinedButton(
       onPressed: () {
         setState(() {
@@ -464,10 +472,16 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
       },
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: isSelected ? AppColors.primary : Colors.white,
-        foregroundColor: isSelected ? Colors.white : Colors.grey[700],
+        backgroundColor: isSelected
+            ? AppColors.primary
+            : (isDark ? Colors.grey[800] : Colors.white),
+        foregroundColor: isSelected
+            ? Colors.white
+            : Theme.of(context).textTheme.bodyMedium?.color,
         side: BorderSide(
-          color: isSelected ? AppColors.primary : Colors.grey[300]!,
+          color: isSelected
+              ? AppColors.primary
+              : (isDark ? Colors.grey[600]! : Colors.grey[300]!),
         ),
       ),
       child: Text(label),

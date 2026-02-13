@@ -6,13 +6,14 @@ class AppFooterSimple extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).scaffoldBackgroundColor,
           border: Border(
-            top: BorderSide(color: Colors.grey[200]!),
+            top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
           ),
         ),
         child: Row(
@@ -74,13 +75,14 @@ class AppFooterWithDisclaimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: isDark ? Colors.grey[900] : Colors.grey[50],
           border: Border(
-            top: BorderSide(color: Colors.grey[200]!),
+            top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
           ),
         ),
         child: Column(

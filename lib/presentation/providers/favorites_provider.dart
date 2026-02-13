@@ -101,8 +101,20 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
     }
   }
 
-  /// 즐겨찾기 삭제 (로컬)
+  /// 즐겨찾기 삭제 (로컬 + 서버)
   Future<void> deleteFavorite(String id) async {
+    // 서버 ID 추출 (server_123 형태인 경우)
+    if (id.startsWith('server_')) {
+      final serverIdStr = id.replaceFirst('server_', '');
+      final serverId = int.tryParse(serverIdStr);
+      if (serverId != null) {
+        try {
+          await _repository.deleteServerFavorite(serverId);
+        } catch (e) {
+          // 서버 삭제 실패 무시
+        }
+      }
+    }
     await _repository.deleteFavorite(id);
     loadLocalFavorites();
   }
@@ -173,6 +185,21 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
   Future<void> updateMemo(String id, String? memo) async {
     await _repository.updateMemo(id, memo);
     loadLocalFavorites();
+  }
+
+  /// 서버에서 즐겨찾기 동기화
+  Future<int> syncFromServer() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final syncedCount = await _repository.syncFromServer();
+      loadLocalFavorites();
+      return syncedCount;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return 0;
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 }
 

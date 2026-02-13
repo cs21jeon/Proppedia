@@ -98,4 +98,60 @@ class HistoryRepository {
   Future<void> clearHistory() async {
     await DatabaseService.clearSearchHistory();
   }
+
+  /// 서버 검색 기록을 로컬에 동기화
+  Future<int> syncFromServer() async {
+    try {
+      final serverHistory = await getServerHistory(limit: 100);
+      int syncedCount = 0;
+
+      // 모든 기록을 플랫하게 변환 후 PNU별로 최신 것만 선택
+      final allItems = <Map<String, dynamic>>[];
+      for (final dateGroup in serverHistory.values) {
+        allItems.addAll(dateGroup);
+      }
+
+      // PNU별로 가장 최신 기록만 유지 (id가 큰 것이 최신)
+      final latestByPnu = <String, Map<String, dynamic>>{};
+      for (final item in allItems) {
+        final pnu = item['pnu'] as String?;
+        if (pnu == null || pnu.isEmpty) continue;
+
+        final existingItem = latestByPnu[pnu];
+        if (existingItem == null || (item['id'] as int) > (existingItem['id'] as int)) {
+          latestByPnu[pnu] = item;
+        }
+      }
+
+      // 최신 기록만 동기화
+      for (final item in latestByPnu.values) {
+        final history = SearchHistory(
+          id: 'server_${item['id']}',
+          searchType: item['search_type'] ?? 'jibun',
+          displayAddress: item['address_text'] ?? '',
+          jibunAddress: item['address_text'],
+          pnu: item['pnu'],
+          searchedAt: item['created_at'] != null
+              ? DateTime.parse(item['created_at'])
+              : DateTime.now(),
+          buildingName: item['building_name'],
+        );
+
+        // 중복 체크 후 로컬에 저장
+        final existingByPnu = DatabaseService.searchHistoryBox.values.where(
+          (h) => h.pnu == history.pnu && h.pnu != null && h.pnu!.isNotEmpty,
+        );
+
+        if (existingByPnu.isEmpty) {
+          await DatabaseService.addSearchHistory(history);
+          syncedCount++;
+        }
+      }
+
+      return syncedCount;
+    } catch (e) {
+      // 동기화 실패 시 무시 (오프라인 지원)
+      return 0;
+    }
+  }
 }

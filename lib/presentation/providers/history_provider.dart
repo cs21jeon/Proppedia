@@ -107,8 +107,46 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
     }
   }
 
-  /// 검색 기록 삭제 (로컬)
+  /// 검색 기록 삭제 (로컬 + 서버)
   Future<void> deleteHistory(String id) async {
+    // 삭제할 기록의 PNU 찾기
+    final historyToDelete = state.localHistory.where((h) => h.id == id).firstOrNull;
+    final pnuToDelete = historyToDelete?.pnu;
+
+    // 서버 ID 추출 (server_123 형태인 경우)
+    if (id.startsWith('server_')) {
+      final serverIdStr = id.replaceFirst('server_', '');
+      final serverId = int.tryParse(serverIdStr);
+      if (serverId != null) {
+        try {
+          await _repository.deleteServerHistory(serverId);
+        } catch (e) {
+          debugPrint('서버 삭제 실패: $e');
+        }
+      }
+    }
+
+    // 같은 PNU를 가진 서버 기록 모두 삭제
+    if (pnuToDelete != null && pnuToDelete.isNotEmpty) {
+      try {
+        final serverHistory = await _repository.getServerHistory();
+        for (final dateGroup in serverHistory.values) {
+          for (final item in dateGroup) {
+            if (item['pnu'] == pnuToDelete) {
+              final serverId = item['id'] as int?;
+              if (serverId != null) {
+                try {
+                  await _repository.deleteServerHistory(serverId);
+                } catch (_) {}
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('서버 중복 삭제 실패: $e');
+      }
+    }
+
     await _repository.deleteHistory(id);
     loadLocalHistory();
   }
@@ -127,6 +165,21 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
   Future<void> clearHistory() async {
     await _repository.clearHistory();
     state = state.copyWith(localHistory: []);
+  }
+
+  /// 서버에서 검색 기록 동기화
+  Future<int> syncFromServer() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final syncedCount = await _repository.syncFromServer();
+      loadLocalHistory();
+      return syncedCount;
+    } catch (e) {
+      debugPrint('서버 동기화 에러: $e');
+      return 0;
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 }
 

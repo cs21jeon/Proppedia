@@ -12,6 +12,7 @@ import 'package:propedia/presentation/screens/search/search_map_screen.dart';
 import 'package:propedia/presentation/screens/search/result_screen.dart';
 import 'package:propedia/presentation/screens/history/history_screen.dart';
 import 'package:propedia/presentation/screens/favorites/favorites_screen.dart';
+import 'package:propedia/presentation/screens/profile/profile_screen.dart';
 
 // 인증 상태 변경을 감지하는 Listenable
 class AuthNotifierListenable extends ChangeNotifier {
@@ -107,6 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/favorites',
         builder: (context, state) => const FavoritesScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

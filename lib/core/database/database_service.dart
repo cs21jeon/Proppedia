@@ -37,12 +37,20 @@ class DatabaseService {
 
   /// 검색 기록 추가
   static Future<void> addSearchHistory(SearchHistory history) async {
-    // 중복 제거 (같은 주소가 있으면 삭제 후 다시 추가)
-    final existing = searchHistoryBox.values.where(
-      (h) => h.displayAddress == history.displayAddress &&
+    // 중복 제거 (같은 PNU + 동 + 호가 있으면 삭제 후 다시 추가)
+    // PNU가 없으면 jibunAddress로 비교
+    final existing = searchHistoryBox.values.where((h) {
+      // PNU가 있으면 PNU로 비교 (지번까지 정확히 일치)
+      if (history.pnu != null && history.pnu!.isNotEmpty) {
+        return h.pnu == history.pnu &&
+            h.dongName == history.dongName &&
+            h.hoName == history.hoName;
+      }
+      // PNU가 없으면 지번주소로 비교
+      return h.jibunAddress == history.jibunAddress &&
           h.dongName == history.dongName &&
-          h.hoName == history.hoName,
-    );
+          h.hoName == history.hoName;
+    });
     for (final item in existing) {
       await item.delete();
     }

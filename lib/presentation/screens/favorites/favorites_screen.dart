@@ -17,9 +17,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 진입 시 로컬 즐겨찾기 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // 화면 진입 시 로컬 즐겨찾기 로드 및 서버 동기화
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(favoritesProvider.notifier).loadLocalFavorites();
+      // 서버에서 즐겨찾기 동기화 (로컬에 없는 것만 추가)
+      await ref.read(favoritesProvider.notifier).syncFromServer();
     });
   }
 
@@ -249,7 +251,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.read(favoritesProvider.notifier).loadLocalFavorites();
+        await ref.read(favoritesProvider.notifier).syncFromServer();
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -332,19 +334,24 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     ],
                     if (memo != null && memo.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          memo,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final isDark = Theme.of(context).brightness == Brightness.dark;
+                          return Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[800] : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              memo,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ],
@@ -417,11 +424,12 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   }
 
   Widget _buildBottomNavigation() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -446,6 +454,12 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
             isActive: true,
             activeColor: Colors.amber,
             onTap: () {},
+          ),
+          _buildNavItem(
+            icon: Icons.person_outline,
+            label: '프로필',
+            isActive: false,
+            onTap: () => context.go('/profile'),
           ),
         ],
       ),

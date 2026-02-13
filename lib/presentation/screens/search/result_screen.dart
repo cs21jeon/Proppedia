@@ -160,11 +160,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         searchState.result != null &&
         (!isMultiUnit || areaInfoState.status == SearchStatus.success);
 
-    // 즐겨찾기 여부 확인
-    final displayAddress = _getDisplayAddress(searchState.result);
-    final isFavorite = displayAddress.isNotEmpty &&
+    // 즐겨찾기 여부 확인 (PNU 기반)
+    final pnu = searchState.result?.codes?.pnu;
+    final isFavorite = pnu != null &&
+        pnu.isNotEmpty &&
         favoritesState.localFavorites.any((f) =>
-            f.displayAddress == displayAddress &&
+            f.pnu == pnu &&
             f.dongName == _selectedDong &&
             f.hoName == _selectedHo);
 
@@ -516,12 +517,13 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   /// 6. 안내문구 섹션
   Widget _buildDisclaimerSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark ? Colors.grey[850] : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -922,15 +924,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
                 children: [
-                  _buildFloorTableCell('층', flex: 2, isHeader: true),
-                  _buildFloorTableCell('구조', flex: 2, isHeader: true),
-                  _buildFloorTableCell('용도', flex: 3, isHeader: true),
-                  _buildFloorTableCell('면적', flex: 2, isHeader: true),
+                  _buildFloorTableCell(context, '층', flex: 2, isHeader: true),
+                  _buildFloorTableCell(context, '구조', flex: 2, isHeader: true),
+                  _buildFloorTableCell(context, '용도', flex: 3, isHeader: true),
+                  _buildFloorTableCell(context, '면적', flex: 2, isHeader: true),
                 ],
               ),
             ),
@@ -945,14 +947,14 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
                 ),
                 child: Row(
                   children: [
-                    _buildFloorTableCell(floorName, flex: 2),
-                    _buildFloorTableCell(structure, flex: 2),
-                    _buildFloorTableCell(purpose, flex: 3),
-                    _buildFloorTableCell(areaText, flex: 2),
+                    _buildFloorTableCell(context, floorName, flex: 2),
+                    _buildFloorTableCell(context, structure, flex: 2),
+                    _buildFloorTableCell(context, purpose, flex: 3),
+                    _buildFloorTableCell(context, areaText, flex: 2),
                   ],
                 ),
               );
@@ -964,7 +966,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   }
 
   /// 층별개요 테이블 셀
-  Widget _buildFloorTableCell(String text, {int flex = 1, bool isHeader = false}) {
+  Widget _buildFloorTableCell(BuildContext context, String text, {int flex = 1, bool isHeader = false}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       flex: flex,
       child: Text(
@@ -972,7 +975,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          color: isHeader ? Colors.grey[700] : Colors.black87,
+          color: isHeader
+              ? (isDark ? Colors.grey[300] : Colors.grey[700])
+              : Theme.of(context).textTheme.bodyMedium?.color,
         ),
         textAlign: TextAlign.center,
         overflow: TextOverflow.ellipsis,
@@ -1005,8 +1010,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
+              dropdownColor: Theme.of(context).cardColor,
               items: dongList.map((dong) {
                 final hoData = dongHoDict[dong];
                 final hoCount = hoData is List ? hoData.length : 0;
@@ -1026,8 +1032,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
+              dropdownColor: Theme.of(context).cardColor,
               items: _hoList.map((ho) {
                 final displayText = ho.endsWith('호') ? ho : '$ho호';
                 return DropdownMenuItem(value: ho, child: Text(displayText));

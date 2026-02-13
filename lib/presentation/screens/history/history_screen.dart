@@ -18,9 +18,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 진입 시 로컬 기록 로드
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // 화면 진입 시 로컬 기록 로드 및 서버 동기화
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(historyProvider.notifier).loadLocalHistory();
+      // 서버에서 검색 기록 동기화 (로컬에 없는 기록만 추가)
+      await ref.read(historyProvider.notifier).syncFromServer();
     });
   }
 
@@ -273,7 +275,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.read(historyProvider.notifier).loadLocalHistory();
+        await ref.read(historyProvider.notifier).syncFromServer();
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -403,11 +405,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   Widget _buildBottomNavigation() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
         ),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -431,6 +434,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             label: '즐겨찾기',
             isActive: false,
             onTap: () => context.go('/favorites'),
+          ),
+          _buildNavItem(
+            icon: Icons.person_outline,
+            label: '프로필',
+            isActive: false,
+            onTap: () => context.go('/profile'),
           ),
         ],
       ),

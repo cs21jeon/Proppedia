@@ -408,29 +408,201 @@
 
 
 
+&nbsp; ### 버그 수정 (2026-02-13):
+
+&nbsp; **검색 기록 저장 타이밍 문제 수정**
+
+&nbsp; - 문제: `_saveSearchHistory()`가 검색 완료 전(loading 상태)에 호출되어 기록이 저장되지 않음
+
+&nbsp; - 해결: `ref.listenManual()`을 사용하여 검색 완료(success) 상태 감지 후 저장
+
+&nbsp; - 수정 파일: `lib/presentation/screens/search/result_screen.dart`
+
+
+
+&nbsp; **검색 기록/즐겨찾기 지번 주소 표시**
+
+&nbsp; - `history_screen.dart` - 로컬 기록에서 jibunAddress 우선 표시, 도로명 주소 함께 표시
+
+&nbsp; - `favorites_screen.dart` - 로컬 즐겨찾기로 변경, jibunAddress 우선 표시
+
+
+
+&nbsp; **하단 네비게이션 바 호버/터치 효과 추가**
+
+&nbsp; - `home_screen.dart`, `history_screen.dart`, `favorites_screen.dart`
+
+&nbsp; - GestureDetector → Material + InkWell 변경
+
+&nbsp; - hoverColor, splashColor 추가
+
+
+
+&nbsp; **데이터 영구 저장 확인**
+
+&nbsp; - Hive 로컬 저장소: 앱 종료 후에도 데이터 유지
+
+&nbsp; - Android: 앱 데이터 폴더에 영구 저장
+
+&nbsp; - Web: IndexedDB에 영구 저장 (시크릿 모드 제외)
+
+
+
 &nbsp; ---
 
 
 
-&nbsp; ## 다음 단계: Phase 6 (프로필 및 설정)
+&nbsp; ## Phase 6: 프로필 및 설정 ✅ 완료 (2026-02-13)
+
+
+
+&nbsp; ### 구현된 파일 목록:
+
+
+
+&nbsp; **Provider**
+
+&nbsp; - `lib/presentation/providers/theme_provider.dart` - 다크모드 상태 관리 (ThemeModeNotifier)
+
+&nbsp; - `lib/presentation/providers/user_provider.dart` - 사용 통계 상태 관리 (UsageStatsNotifier)
+
+
+
+&nbsp; **DTO**
+
+&nbsp; - `lib/data/dto/user_stats_dto.dart` - UsageStatsResponse, UsageStats, SearchByType
+
+
+
+&nbsp; **API & Repository**
+
+&nbsp; - `lib/data/datasources/remote/user_api.dart` - 사용 통계 API 호출
+
+&nbsp; - `lib/data/repositories/user_repository.dart` - 사용 통계 비즈니스 로직
+
+
+
+&nbsp; **화면 UI**
+
+&nbsp; - `lib/presentation/screens/profile/profile_screen.dart` - 프로필 화면
+
+&nbsp;   - 사용자 정보 카드
+
+&nbsp;   - 다크모드 토글 (Switch)
+
+&nbsp;   - 사용 통계 표시 (총 검색, 즐겨찾기, 오늘/이번주 검색, 검색타입별 통계)
+
+&nbsp;   - 로그아웃 버튼
+
+
+
+&nbsp; **라우터 업데이트**
+
+&nbsp; - `lib/core/router/app_router.dart` - /profile 라우트 추가
+
+
+
+&nbsp; **하단 네비게이션 업데이트**
+
+&nbsp; - `lib/presentation/screens/home/home_screen.dart` - 프로필 탭 추가
+
+&nbsp; - `lib/presentation/screens/history/history_screen.dart` - 프로필 탭 추가
+
+&nbsp; - `lib/presentation/screens/favorites/favorites_screen.dart` - 프로필 탭 추가
+
+
+
+&nbsp; **앱 테마 연동**
+
+&nbsp; - `lib/app.dart` - ThemeModeProvider 연동
+
+
+
+&nbsp; ### 연동된 API 엔드포인트:
+
+&nbsp; - GET /app/api/user/usage-stats - 사용 통계 조회
+
+
+
+&nbsp; ### 주요 기능:
+
+&nbsp; - 다크모드/라이트모드 전환 (SharedPreferences로 영구 저장)
+
+&nbsp; - 사용 통계 표시 (총 검색, 즐겨찾기, 오늘/이번주/이번달 검색)
+
+&nbsp; - 검색 타입별 통계 (도로명/지번/지도)
+
+&nbsp; - 마지막 검색 일시, 가입일 표시
+
+&nbsp; - 로그아웃 기능
+
+&nbsp; - 하단 네비게이션 4탭 (홈, 검색기록, 즐겨찾기, 프로필)
+
+
+
+&nbsp; ### 버그 수정 (2026-02-13):
+
+&nbsp; **즐겨찾기 상태 표시 오류**
+&nbsp; - 문제: 즐겨찾기 별이 항상 노란색으로 표시됨
+&nbsp; - 해결: displayAddress 기반 → PNU 기반 비교로 변경
+&nbsp; - 수정 파일: `result_screen.dart`
+
+&nbsp; **사용 통계 로드 실패**
+&nbsp; - 문제: 서버 API 미구현으로 통계 로드 불가
+&nbsp; - 해결: 서버 API 대신 로컬 데이터(historyProvider, favoritesProvider) 기반 통계로 변경
+&nbsp; - 수정 파일: `profile_screen.dart`
+
+&nbsp; **다크모드 색상 문제**
+&nbsp; - 지번 검색 법정동 드롭다운 글씨 안보임 → Theme.of(context).cardColor 적용
+&nbsp; - 층별개요 테이블 글씨 검은색 → isDark 조건 분기
+&nbsp; - 공동주택 동/호 선택 드롭다운 → dropdownColor, fillColor 테마 적용
+&nbsp; - 토지구분 버튼 배경색 → isDark 조건 분기
+&nbsp; - 수정 파일: `search_jibun_screen.dart`, `result_screen.dart`
+
+&nbsp; **다크모드 네비게이션/푸터 배경 흰색**
+&nbsp; - 문제: 하단 네비게이션 바와 푸터가 다크모드에서도 흰색 유지
+&nbsp; - 해결: `Colors.white` → `Theme.of(context).scaffoldBackgroundColor` 변경
+&nbsp; - 수정 파일: `app_footer.dart`, `home_screen.dart`, `history_screen.dart`, `favorites_screen.dart`
+
+&nbsp; **로고 다크모드 투명 문제**
+&nbsp; - 문제: 로고의 책 부분이 투명 처리되어 다크모드에서 안보임
+&nbsp; - 해결: "fillbook" 버전 로고로 교체 (책 부분 흰색 채움)
+&nbsp; - 교체된 파일: `assets/images/proppedia_logo.png`, `assets/images/proppedia_logo_landscape.png`
+&nbsp; - 영향받는 화면: 로그인, 홈 헤더, PDF
+
+&nbsp; ---
+
+
+
+&nbsp; ## 다음 단계: Phase 7 (매물 정보 조회)
 
 
 
 &nbsp; 구현 예정:
 
-&nbsp; - ProfileScreen UI
+&nbsp; - Property 모델 정의
 
-&nbsp; - 다크모드 토글 (ThemeMode Provider)
+&nbsp; - PropertyRepository + PropertyApi 구현
 
-&nbsp; - 사용 통계 표시
+&nbsp; - HomeScreen (매물 검색 인터페이스)
 
-&nbsp; - 로그아웃
+&nbsp; - PropertyListView (카테고리별 매물 목록)
+
+&nbsp; - PropertyCard 위젯
+
+&nbsp; - PropertyDetailScreen (매물 상세)
+
+&nbsp; - 조건 검색 (매가, 수익률, 면적 등)
 
 
 
 &nbsp; 연동할 API:
 
-&nbsp; - GET /app/api/user/usage-stats
+&nbsp; - GET /api/property-list
+
+&nbsp; - GET /api/category-properties?view=...
+
+&nbsp; - GET /api/property-detail?id=...
 
 
 
@@ -1279,4 +1451,69 @@ VWorld를 기반으로 생성되었습니다.
 | `pdf\_provider.dart` | 파일명 형식 (지번+동호+타임스탬프) |
 
 | `launch\_background.xml` | 스플래시 이미지 활성
+
+---
+
+### 2026-02-13: 검색기록/즐겨찾기 동기화 및 삭제 기능 개선
+
+#### 1. 검색기록 중복 제거 로직 수정
+
+**문제**: 같은 행정구역(displayAddress)만 같아도 기존 기록을 덮어씀
+
+**해결**: PNU(지번코드) + 동명 + 호명 기준으로 변경
+
+**수정 파일**: `lib/core/database/database_service.dart`
+
+```dart
+// 변경 전: displayAddress로 비교
+// 변경 후: PNU + dongName + hoName으로 비교
+```
+
+#### 2. 서버 동기화 기능 추가
+
+앱 시작 시 서버에서 검색기록/즐겨찾기를 불러와 로컬에 동기화
+
+**수정 파일**:
+- `lib/data/datasources/remote/history_api.dart` - API 경로 수정 (`/app/api/user/history`)
+- `lib/data/repositories/history_repository.dart` - `syncFromServer()` 메서드 추가
+- `lib/data/repositories/favorites_repository.dart` - `syncFromServer()` 메서드 추가
+- `lib/presentation/providers/history_provider.dart` - 동기화 호출
+- `lib/presentation/providers/favorites_provider.dart` - 동기화 호출
+- `lib/presentation/screens/history/history_screen.dart` - 화면 진입 시 자동 동기화
+- `lib/presentation/screens/favorites/favorites_screen.dart` - 화면 진입 시 자동 동기화
+
+**동기화 로직**:
+- PNU별 최신 기록만 가져오기 (중복 제거)
+- 로컬에 없는 기록만 추가
+- 당겨서 새로고침 시 서버 재동기화
+
+#### 3. 삭제 시 서버 연동
+
+**문제**: 로컬에서 삭제해도 서버에서 다시 동기화되어 복원됨
+
+**해결**: 삭제 시 같은 PNU를 가진 모든 서버 기록도 함께 삭제
+
+**수정 파일**:
+- `lib/presentation/providers/history_provider.dart` - `deleteHistory()` 수정
+- `lib/presentation/providers/favorites_provider.dart` - `deleteFavorite()` 수정
+
+#### 4. 저장 기간 확인
+
+| 항목 | 로컬(Hive) | 서버(PostgreSQL) |
+|------|-----------|-----------------|
+| 검색기록 | 최대 100개, 영구 저장 | 무제한, 영구 저장 |
+| 즐겨찾기 | 무제한, 영구 저장 | 무제한, 영구 저장 |
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `database_service.dart` | 중복 제거 로직 PNU 기준으로 변경 |
+| `history_api.dart` | API 경로 `/app/api/user/history`로 수정 |
+| `history_repository.dart` | `syncFromServer()` 추가, PNU별 최신 기록만 |
+| `favorites_repository.dart` | `syncFromServer()` 추가 |
+| `history_provider.dart` | 삭제 시 서버 연동, 동기화 메서드 |
+| `favorites_provider.dart` | 삭제 시 서버 연동, 동기화 메서드 |
+| `history_screen.dart` | 화면 진입 시 서버 동기화 |
+| `favorites_screen.dart` | 화면 진입 시 서버 동기화 |
 

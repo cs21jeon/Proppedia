@@ -6,11 +6,11 @@ class HistoryApi {
   HistoryApi(this._dio);
 
   /// 검색 기록 조회 (서버)
-  Future<Map<String, dynamic>> getSearchHistory({int page = 1, int limit = 50}) async {
+  Future<Map<String, dynamic>> getSearchHistory({int limit = 100}) async {
     try {
       final response = await _dio.get(
-        '/app/api/user/search-history',
-        queryParameters: {'page': page, 'limit': limit},
+        '/app/api/user/history',
+        queryParameters: {'limit': limit},
       );
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
@@ -22,7 +22,7 @@ class HistoryApi {
   Future<Map<String, dynamic>> saveSearchHistory(Map<String, dynamic> data) async {
     try {
       final response = await _dio.post(
-        '/app/api/user/search-history',
+        '/app/api/user/history',
         data: data,
       );
       return response.data as Map<String, dynamic>;
@@ -34,7 +34,7 @@ class HistoryApi {
   /// 검색 기록 삭제 (서버)
   Future<void> deleteSearchHistory(int id) async {
     try {
-      await _dio.delete('/app/api/user/search-history/$id');
+      await _dio.delete('/app/api/user/history/$id');
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? '검색 기록 삭제 실패');
     }

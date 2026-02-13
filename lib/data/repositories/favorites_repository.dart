@@ -116,4 +116,46 @@ class FavoritesRepository {
   Future<void> updateServerMemo(int id, String? memo) async {
     await _api.updateFavoriteMemo(id, memo);
   }
+
+  /// 서버 즐겨찾기를 로컬에 동기화
+  Future<int> syncFromServer() async {
+    try {
+      final serverFavorites = await getServerFavorites(limit: 100);
+      int syncedCount = 0;
+
+      for (final item in serverFavorites) {
+        final pnu = item['pnu'] as String?;
+
+        // PNU로 중복 체크
+        if (pnu != null && pnu.isNotEmpty) {
+          final existingByPnu = DatabaseService.favoritesBox.values.where(
+            (f) => f.pnu == pnu,
+          );
+
+          if (existingByPnu.isEmpty) {
+            final favorite = Favorite(
+              id: 'server_${item['id']}',
+              displayAddress: item['address_text'] ?? '',
+              jibunAddress: item['address_text'],
+              buildingName: item['building_name'],
+              pnu: pnu,
+              createdAt: item['created_at'] != null
+                  ? DateTime.parse(item['created_at'])
+                  : DateTime.now(),
+              memo: item['memo'],
+              serverId: item['id'] as int?,
+            );
+
+            await DatabaseService.addFavorite(favorite);
+            syncedCount++;
+          }
+        }
+      }
+
+      return syncedCount;
+    } catch (e) {
+      // 동기화 실패 시 무시 (오프라인 지원)
+      return 0;
+    }
+  }
 }
