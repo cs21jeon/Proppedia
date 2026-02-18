@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
+import 'package:propedia/presentation/widgets/common/app_drawer.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -16,6 +17,12 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 72,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -49,8 +56,8 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         centerTitle: true,
-        // 프로필 버튼은 하단 네비게이션으로 이동
       ),
+      drawer: const AppDrawer(currentApp: AppType.main),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

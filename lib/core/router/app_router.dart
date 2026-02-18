@@ -13,6 +13,13 @@ import 'package:propedia/presentation/screens/search/result_screen.dart';
 import 'package:propedia/presentation/screens/history/history_screen.dart';
 import 'package:propedia/presentation/screens/favorites/favorites_screen.dart';
 import 'package:propedia/presentation/screens/profile/profile_screen.dart';
+import 'package:propedia/presentation/screens/property/property_home_screen.dart';
+import 'package:propedia/presentation/screens/property/property_list_screen.dart';
+import 'package:propedia/presentation/screens/property/property_detail_screen.dart';
+import 'package:propedia/presentation/screens/property/property_map_screen.dart';
+import 'package:propedia/presentation/screens/property/property_search_screen.dart';
+import 'package:propedia/presentation/screens/property/property_search_map_screen.dart';
+import 'package:propedia/data/dto/property_dto.dart';
 
 // 인증 상태 변경을 감지하는 Listenable
 class AuthNotifierListenable extends ChangeNotifier {
@@ -112,6 +119,40 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      // 매물 관련 라우트
+      GoRoute(
+        path: '/property',
+        builder: (context, state) => const PropertyHomeScreen(),
+      ),
+      GoRoute(
+        path: '/property/list',
+        builder: (context, state) {
+          final category = state.uri.queryParameters['category'];
+          return PropertyListScreen(initialCategory: category);
+        },
+      ),
+      GoRoute(
+        path: '/property/detail/:recordId',
+        builder: (context, state) {
+          final recordId = state.pathParameters['recordId']!;
+          return PropertyDetailScreen(recordId: recordId);
+        },
+      ),
+      GoRoute(
+        path: '/property/map',
+        builder: (context, state) => const PropertyMapScreen(),
+      ),
+      GoRoute(
+        path: '/property/search',
+        builder: (context, state) => const PropertySearchScreen(),
+      ),
+      GoRoute(
+        path: '/property/search-map',
+        builder: (context, state) {
+          final markers = state.extra as List<PropertyMapMarker>? ?? [];
+          return PropertySearchMapScreen(markers: markers);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
