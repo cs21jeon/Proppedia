@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
+import 'package:propedia/core/constants/terms.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // 동의 체크박스 상태
+  bool _agreeAll = false;
+  bool _agreeTerms = false;
+  bool _agreePrivacy = false;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -29,7 +35,57 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
+  void _updateAgreeAll() {
+    setState(() {
+      _agreeAll = _agreeTerms && _agreePrivacy;
+    });
+  }
+
+  void _onAgreeAllChanged(bool? value) {
+    setState(() {
+      _agreeAll = value ?? false;
+      _agreeTerms = _agreeAll;
+      _agreePrivacy = _agreeAll;
+    });
+  }
+
+  void _showTermsDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: SingleChildScrollView(
+            child: Text(
+              content,
+              style: const TextStyle(fontSize: 13, height: 1.6),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleRegister() async {
+    // 동의 확인
+    if (!_agreeTerms || !_agreePrivacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('필수 약관에 모두 동의해주세요.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     ref.read(authProvider.notifier).clearError();
@@ -57,6 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState.status == AuthStatus.loading;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // 에러 메시지 표시
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -86,7 +143,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 이름 입력 (선택)
                 TextFormField(
@@ -165,7 +222,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleRegister(),
                   decoration: InputDecoration(
                     labelText: '비밀번호 확인',
                     prefixIcon: const Icon(Icons.lock_outlined),
@@ -193,7 +249,179 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+
+                // 약관 동의 섹션
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[850] : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 전체 동의
+                      InkWell(
+                        onTap: () => _onAgreeAllChanged(!_agreeAll),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _agreeAll,
+                              onChanged: _onAgreeAllChanged,
+                              activeColor: AppColors.primary,
+                            ),
+                            const Expanded(
+                              child: Text(
+                                '전체 동의',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(
+                        color: isDark ? Colors.grey[700] : Colors.grey[300],
+                      ),
+                      const SizedBox(height: 4),
+
+                      // 이용약관 동의
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _agreeTerms,
+                            onChanged: (value) {
+                              setState(() {
+                                _agreeTerms = value ?? false;
+                                _updateAgreeAll();
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _agreeTerms = !_agreeTerms;
+                                  _updateAgreeAll();
+                                });
+                              },
+                              child: const Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(text: '서비스 이용약관 동의 '),
+                                    TextSpan(
+                                      text: '(필수)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _showTermsDialog(
+                              '서비스 이용약관',
+                              Terms.termsOfService,
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              '보기',
+                              style: TextStyle(
+                                fontSize: 13,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // 개인정보 수집/이용 동의
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _agreePrivacy,
+                            onChanged: (value) {
+                              setState(() {
+                                _agreePrivacy = value ?? false;
+                                _updateAgreeAll();
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _agreePrivacy = !_agreePrivacy;
+                                  _updateAgreeAll();
+                                });
+                              },
+                              child: const Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(text: '개인정보 수집/이용 동의 '),
+                                    TextSpan(
+                                      text: '(필수)',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _showTermsDialog(
+                              '개인정보 수집/이용 동의',
+                              Terms.privacyPolicy,
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text(
+                              '보기',
+                              style: TextStyle(
+                                fontSize: 13,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+                      // 개인정보 수집 요약
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[800] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          Terms.privacySummary,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // 회원가입 버튼
                 SizedBox(
@@ -238,6 +466,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

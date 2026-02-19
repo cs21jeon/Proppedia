@@ -118,7 +118,7 @@ class PropertyHomeScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '서울 강남권 수익형 부동산 전문',
+                            '수익형 부동산 전문',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -176,7 +176,7 @@ class PropertyHomeScreen extends ConsumerWidget {
               _MenuCard(
                 icon: Icons.landscape_outlined,
                 title: '재건축용 토지',
-                subtitle: '재건축 가능한 토지 매물',
+                subtitle: '재건축 가능한 80평 이상 토지 매물',
                 color: Colors.green,
                 onTap: () => context.push('/property/list?category=reconstruction'),
               ),
@@ -186,7 +186,7 @@ class PropertyHomeScreen extends ConsumerWidget {
               _MenuCard(
                 icon: Icons.trending_up,
                 title: '고수익률 건물',
-                subtitle: '수익률이 높은 건물 매물',
+                subtitle: '6%이상 수익률 높은 건물 매물',
                 color: Colors.blue,
                 onTap: () => context.push('/property/list?category=highYield'),
               ),
@@ -196,7 +196,7 @@ class PropertyHomeScreen extends ConsumerWidget {
               _MenuCard(
                 icon: Icons.house_outlined,
                 title: '저가단독주택',
-                subtitle: '합리적인 가격의 단독주택 매물',
+                subtitle: '합리적 가격의 단독주택 매물',
                 color: Colors.orange,
                 onTap: () => context.push('/property/list?category=lowCost'),
               ),

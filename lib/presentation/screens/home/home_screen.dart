@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
+import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 import 'package:propedia/presentation/widgets/common/app_drawer.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
@@ -161,6 +163,8 @@ class HomeScreen extends ConsumerWidget {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 배너 광고 (웹이 아닌 경우에만 표시)
+          if (!kIsWeb) const BannerAdWidget(),
           _buildBottomNavigation(context),
           const AppFooterSimple(),
         ],

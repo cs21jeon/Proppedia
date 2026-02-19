@@ -9,6 +9,7 @@ import 'package:propedia/presentation/providers/map_provider.dart';
 import 'package:propedia/presentation/providers/pdf_provider.dart';
 import 'package:propedia/presentation/providers/history_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
+import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -201,6 +202,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         ],
       ),
       body: _buildBody(context, searchState),
+      // 배너 광고 (웹이 아닌 경우에만 표시)
+      bottomNavigationBar: kIsWeb ? null : const BottomBannerAdWidget(),
     );
   }
 

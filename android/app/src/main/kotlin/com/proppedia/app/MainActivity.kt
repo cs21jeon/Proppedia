@@ -1,4 +1,4 @@
-package com.example.propedia
+package com.proppedia.app
 
 import io.flutter.embedding.android.FlutterActivity
 

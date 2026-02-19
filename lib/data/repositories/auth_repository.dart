@@ -1,3 +1,4 @@
+import 'package:propedia/core/storage/login_preferences.dart';
 import 'package:propedia/core/storage/token_storage.dart';
 import 'package:propedia/data/datasources/remote/auth_api.dart';
 import 'package:propedia/data/dto/auth_dto.dart';
@@ -6,12 +7,15 @@ import 'package:propedia/domain/entities/user.dart';
 class AuthRepository {
   final AuthApi _authApi;
   final TokenStorage _tokenStorage;
+  final LoginPreferences _loginPreferences;
 
   AuthRepository({
     required AuthApi authApi,
     required TokenStorage tokenStorage,
+    LoginPreferences? loginPreferences,
   })  : _authApi = authApi,
-        _tokenStorage = tokenStorage;
+        _tokenStorage = tokenStorage,
+        _loginPreferences = loginPreferences ?? LoginPreferences();
 
   /// 회원가입
   Future<User> register({
@@ -79,15 +83,30 @@ class AuthRepository {
   }
 
   /// 자동 로그인 체크
+  /// 토큰이 있고, 자동 로그인 설정이 켜져 있는 경우에만 자동 로그인
   Future<User?> checkAutoLogin() async {
+    // 1. 토큰 존재 여부 확인
     final hasToken = await _tokenStorage.hasToken();
     if (!hasToken) return null;
 
+    // 2. 자동 로그인 설정 확인
+    final autoLoginEnabled = await _loginPreferences.getAutoLogin();
+    if (!autoLoginEnabled) {
+      // 자동 로그인이 꺼져 있으면 토큰은 유지하되 로그인 화면으로 이동
+      return null;
+    }
+
+    // 3. 서버에서 사용자 정보 조회
     return await getMe();
   }
 
   /// 토큰 존재 여부
   Future<bool> hasToken() async {
     return await _tokenStorage.hasToken();
+  }
+
+  /// 자동 로그인 설정 여부
+  Future<bool> isAutoLoginEnabled() async {
+    return await _loginPreferences.getAutoLogin();
   }
 }

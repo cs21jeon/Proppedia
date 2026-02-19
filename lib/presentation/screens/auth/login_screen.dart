@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
+import 'package:propedia/core/storage/login_preferences.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,7 +16,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _loginPreferences = LoginPreferences();
   bool _obscurePassword = true;
+
+  // 체크박스 상태
+  bool _saveEmail = false;
+  bool _autoLogin = true;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLoginSettings();
+  }
+
+  Future<void> _loadLoginSettings() async {
+    final settings = await _loginPreferences.getSettings();
+    if (mounted) {
+      setState(() {
+        _saveEmail = settings.saveEmail;
+        _autoLogin = settings.autoLogin;
+        if (settings.saveEmail && settings.savedEmail != null) {
+          _emailController.text = settings.savedEmail!;
+        }
+        _isInitialized = true;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -26,6 +53,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // 설정 저장
+    await _loginPreferences.setSaveEmail(_saveEmail);
+    await _loginPreferences.setAutoLogin(_autoLogin);
+
+    if (_saveEmail) {
+      await _loginPreferences.setSavedEmail(_emailController.text.trim());
+    } else {
+      await _loginPreferences.setSavedEmail(null);
+    }
 
     ref.read(authProvider.notifier).clearError();
 
@@ -190,7 +227,100 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+
+                // 체크박스 영역
+                if (_isInitialized) ...[
+                  Row(
+                    children: [
+                      // 이메일 저장
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _saveEmail = !_saveEmail;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _saveEmail,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _saveEmail = value ?? false;
+                                      });
+                                    },
+                                    activeColor: AppColors.primary,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '이메일 저장',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // 자동 로그인
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _autoLogin = !_autoLogin;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _autoLogin,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _autoLogin = value ?? false;
+                                      });
+                                    },
+                                    activeColor: AppColors.primary,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '자동 로그인',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
 
                 // 로그인 버튼
                 SizedBox(

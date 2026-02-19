@@ -9,6 +9,13 @@
 # iOS Secrets
 ios/Flutter/Secrets.xcconfig
 
+# Android Signing Keys
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+*.jks
+*.keystore
+
 # Miscellaneous
 *.class
 *.log
