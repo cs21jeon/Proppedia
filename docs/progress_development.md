@@ -1735,3 +1735,188 @@ VWorld를 기반으로 생성되었습니다.
 
 ---
 
+### 2026-02-20: 홍보/마케팅 인프라 구축
+
+#### 1. 앱 소개 랜딩 페이지 제작
+
+**생성된 파일**: `marketing/proppedia/index.html`
+
+**URL**: https://goldenrabbit.biz/proppedia/
+
+**페이지 구성**:
+- Hero Section: 헤드라인 + Google Play 다운로드 버튼 + 앱 스크린샷 목업
+- 주요 기능 Section: 건축물 정보, 토지 정보, 공시가격
+- 3가지 검색 방식 Section: 도로명, 지번, 지도
+- 스크린샷 갤러리: 8개 앱 스크린샷
+- 다운로드 CTA Section
+- Footer: 금토끼부동산 정보, 개인정보처리방침 링크
+
+**SEO 최적화**:
+- title: "Proppedia 부동산백과 - 건물과 토지에 관한 모든 정보"
+- meta description, keywords
+- Open Graph 태그 (SNS 공유용)
+- Twitter Card 태그
+- Schema.org 구조화된 데이터 (MobileApplication)
+- 반응형 디자인 (모바일/태블릿/데스크톱)
+
+#### 2. Flutter Web 앱 배포
+
+**URL**: https://goldenrabbit.biz/proppedia-app/
+
+**빌드 명령어**:
+```bash
+flutter build web --base-href "/proppedia-app/"
+```
+
+**배포된 파일**:
+- `index.html`, `main.dart.js` (4.3MB)
+- `flutter_bootstrap.js`, `flutter.js`
+- `assets/`, `canvaskit/`, `icons/`
+- `manifest.json`
+
+**수정된 파일**:
+- `lib/app.dart` - title: 'Proppedia 부동산백과'
+- `web/manifest.json` - name, short_name, description 업데이트
+- `web/index.html` - SEO 메타 태그 추가
+
+#### 3. SEO 파일 생성 및 배포
+
+**생성된 파일**:
+- `marketing/robots.txt` - 크롤링 규칙
+- `marketing/sitemap.xml` - 사이트맵 (6개 URL)
+
+**배포 URL**:
+- https://goldenrabbit.biz/robots.txt
+- https://goldenrabbit.biz/sitemap.xml
+
+#### 4. nginx 설정 추가
+
+**수정된 파일**: `/home/webapp/goldenrabbit/config/nginx/goldenrabbit.conf`
+
+**추가된 location 블록**:
+```nginx
+# Proppedia Flutter Web 앱
+location /proppedia-app/ {
+    alias /home/webapp/goldenrabbit/frontend/public/proppedia-app/;
+    try_files $uri $uri/ /proppedia-app/index.html;
+}
+
+# Proppedia 랜딩 페이지
+location /proppedia/ {
+    alias /home/webapp/goldenrabbit/frontend/public/proppedia/;
+    try_files $uri $uri/ /proppedia/index.html;
+}
+
+# proppedia-app 내 .env 파일 허용 (숨김 파일 예외)
+```
+
+#### 5. 블로그 콘텐츠 초안 작성
+
+**생성된 파일**:
+- `marketing/blog-content/01-건축물대장-보는-법.md`
+- `marketing/blog-content/02-공시지가-조회하기.md`
+
+#### 6. 배포 스크립트 생성
+
+**생성된 파일**:
+- `marketing/deploy.ps1` - PowerShell 배포 스크립트
+- `marketing/deploy.sh` - Bash 배포 스크립트
+- `marketing/DEPLOYMENT.md` - 배포 가이드
+
+#### 마케팅 파일 구조
+
+```
+marketing/
+├── proppedia/
+│   └── index.html          # 앱 소개 랜딩 페이지
+├── blog-content/
+│   ├── 01-건축물대장-보는-법.md
+│   └── 02-공시지가-조회하기.md
+├── robots.txt              # 검색 엔진 크롤링 규칙
+├── sitemap.xml             # 사이트맵
+├── deploy.ps1              # PowerShell 배포 스크립트
+├── deploy.sh               # Bash 배포 스크립트
+└── DEPLOYMENT.md           # 배포 가이드
+```
+
+#### 배포된 URL 현황
+
+| URL | 설명 | 상태 |
+|-----|------|------|
+| https://goldenrabbit.biz/proppedia/ | 앱 소개 랜딩 페이지 | ✅ |
+| https://goldenrabbit.biz/proppedia-app/ | Flutter Web 앱 | ✅ |
+| https://goldenrabbit.biz/robots.txt | 크롤링 규칙 | ✅ |
+| https://goldenrabbit.biz/sitemap.xml | 사이트맵 | ✅ |
+
+---
+
+### 2026-02-20: 앱 아이콘 및 이름 변경 (v1.0.1)
+
+#### 1. 앱 아이콘 변경
+
+**사용된 패키지**: `flutter_launcher_icons: ^0.14.3`
+
+**원본 이미지**: `assets/images/proppedia_logo.png`
+
+**설정** (`pubspec.yaml`):
+```yaml
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
+  web:
+    generate: true
+    background_color: "#FFFFFF"
+  windows:
+    generate: true
+  macos:
+    generate: true
+  image_path: "assets/images/proppedia_logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/proppedia_logo.png"
+```
+
+**생성된 아이콘**:
+- Android: mipmap 아이콘 + adaptive 아이콘 (drawable-*/ic_launcher_foreground.png)
+- iOS: AppIcon.appiconset 전체 아이콘
+- Web: favicon.png, Icon-192.png, Icon-512.png
+- Windows: app_icon.ico
+- macOS: AppIcon.appiconset 전체 아이콘
+
+#### 2. 앱 이름 변경
+
+**변경**: "propedia" / "Proppedia" → "부동산백과"
+
+**수정된 파일**:
+- `android/app/src/main/AndroidManifest.xml` - `android:label="부동산백과"`
+- `ios/Runner/Info.plist` - `CFBundleDisplayName`, `CFBundleName` = "부동산백과"
+
+#### 3. 버전 업데이트
+
+**변경**: `1.0.0+1` → `1.0.1+2`
+
+**수정된 파일**: `pubspec.yaml`
+
+#### 4. 빌드 및 배포
+
+- APK 빌드: `build/app/outputs/flutter-apk/app-release.apk` (76.3MB)
+- AAB 빌드: `build/app/outputs/bundle/release/app-release.aab` (61.1MB)
+- Google Play Console 비공개 테스트 업로드 준비 완료
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `pubspec.yaml` | flutter_launcher_icons 추가, 버전 1.0.1+2 |
+| `AndroidManifest.xml` | android:label="부동산백과" |
+| `ios/Runner/Info.plist` | CFBundleName, CFBundleDisplayName = "부동산백과" |
+| `android/app/src/main/res/mipmap-*` | 앱 아이콘 이미지 |
+| `android/app/src/main/res/drawable-*` | adaptive 아이콘 foreground |
+| `ios/Runner/Assets.xcassets/AppIcon.appiconset/*` | iOS 앱 아이콘 |
+| `web/favicon.png`, `web/icons/*` | 웹 아이콘 |
+| `windows/runner/resources/app_icon.ico` | Windows 아이콘 |
+| `macos/Runner/Assets.xcassets/AppIcon.appiconset/*` | macOS 아이콘 |
+
+---
+

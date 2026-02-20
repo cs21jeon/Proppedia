@@ -674,6 +674,67 @@ flutter build ipa --release
 
 ---
 
+---
+
+## 현재 진행 상태 (2026-02-20 업데이트)
+
+### 완료된 Phase
+
+| Phase | 내용 | 상태 | 완료일 |
+|-------|------|------|--------|
+| 1 | 프로젝트 초기화 | ✅ 완료 | 2026-02-10 |
+| 2 | 인증 시스템 | ✅ 완료 | 2026-02-10 |
+| 3 | 건축물 검색 (도로명/지번) | ✅ 완료 | 2026-02-10 |
+| 4 | 지도 검색 | ✅ 완료 | 2026-02-11 |
+| 5 | 검색 기록/즐겨찾기 | ✅ 완료 | 2026-02-12 |
+| 6 | 프로필/설정 | ✅ 완료 | 2026-02-13 |
+| 7 | 매물 정보 조회 | ✅ 완료 | 2026-02-18 |
+| 8 | 매물 지도 표시 | ✅ 완료 | 2026-02-18 |
+| 9 | Flutter Web 배포 | ✅ 완료 | 2026-02-20 |
+| 10 | 모바일 앱 배포 | 🔄 진행중 | - |
+
+### Phase 10 세부 진행 상황
+
+**Android (Google Play)**:
+- [x] 서명 키 생성 (`propedia-release-key.jks`)
+- [x] Play Console 앱 등록 (`com.proppedia.app`)
+- [x] AAB 빌드 완료 (v1.0.1+2)
+- [x] 비공개 테스트 트랙 생성
+- [x] 테스터 20명 모집 및 초대
+- [ ] 14일 테스트 진행 중 (2026-02-20 ~ 03-06)
+- [ ] 프로덕션 출시
+
+**iOS (App Store)**:
+- [ ] Apple Developer Program 가입
+- [ ] 프로비저닝 프로파일 생성
+- [ ] IPA 빌드
+- [ ] App Store Connect 업로드
+- [ ] 심사 및 출시
+
+### Phase 9 완료 내역 (2026-02-20)
+
+**Flutter Web 배포 완료**:
+- 빌드: `flutter build web --release --base-href "/proppedia-app/"`
+- 배포 경로: `/home/webapp/goldenrabbit/frontend/public/proppedia-app/`
+- URL: https://goldenrabbit.biz/proppedia-app/
+
+**홍보/마케팅 인프라 구축 완료**:
+- 앱 소개 랜딩 페이지: https://goldenrabbit.biz/proppedia/
+- SEO 설정: robots.txt, sitemap.xml 배포
+- nginx 설정 업데이트 (proppedia, proppedia-app 경로)
+- 블로그 콘텐츠 초안 작성 (marketing/blog-content/)
+
+### 남은 작업
+
+1. **iOS 앱 출시** (Phase 10)
+   - Apple Developer 계정 필요 ($99/년)
+
+2. **추가 기능** (선택)
+   - 매물 즐겨찾기 연동
+   - 홈 화면 매물 섹션 추가
+
+---
+
 ## 다음 단계
 
 1. **로컬 PC에서 프로젝트 생성**:

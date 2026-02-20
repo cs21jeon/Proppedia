@@ -1,0 +1,144 @@
+# 마케팅 파일 배포 가이드
+
+## 배포 현황 (2026-02-20 완료)
+
+| URL | 설명 | 상태 |
+|-----|------|------|
+| https://goldenrabbit.biz/proppedia/ | 앱 소개 랜딩 페이지 | ✅ 완료 |
+| https://goldenrabbit.biz/proppedia-app/ | Flutter Web 앱 | ✅ 완료 |
+| https://goldenrabbit.biz/robots.txt | 크롤링 규칙 | ✅ 완료 |
+| https://goldenrabbit.biz/sitemap.xml | 사이트맵 | ✅ 완료 |
+
+## 파일 구조
+
+```
+marketing/
+├── proppedia/
+│   └── index.html          # 앱 소개 랜딩 페이지
+├── blog-content/
+│   ├── 01-건축물대장-보는-법.md
+│   └── 02-공시지가-조회하기.md
+├── robots.txt              # 검색 엔진 크롤링 규칙
+├── sitemap.xml             # 사이트맵
+├── deploy.ps1              # PowerShell 배포 스크립트
+└── deploy.sh               # Bash 배포 스크립트
+```
+
+## 서버 배포
+
+### 1. SSH 접속
+
+```bash
+ssh root@175.119.224.71
+# 또는
+ssh -i ~/.ssh/id_rsa root@175.119.224.71
+```
+
+### 2. 디렉토리 생성
+
+```bash
+# 프로필 디렉토리 생성
+mkdir -p /home/webapp/goldenrabbit/frontend/public/proppedia
+mkdir -p /home/webapp/goldenrabbit/frontend/public/proppedia/screenshots
+```
+
+### 3. 파일 업로드
+
+로컬에서 실행:
+
+```bash
+# 랜딩 페이지 업로드
+scp marketing/proppedia/index.html root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia/
+
+# robots.txt 업로드
+scp marketing/robots.txt root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/
+
+# sitemap.xml 업로드
+scp marketing/sitemap.xml root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/
+
+# 스크린샷 업로드
+scp screenshots/*.png root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia/screenshots/
+
+# 로고 업로드
+scp assets/images/proppedia_logo.png root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia/logo.png
+```
+
+### 4. OG 이미지 생성 및 업로드
+
+OG 이미지는 1200x630 크기가 권장됩니다. Feature Graphic을 기반으로 생성하거나:
+
+```bash
+# Feature Graphic 업로드 (임시 OG 이미지로 사용)
+scp "screenshots/Feature Graphic_proppedia.png" root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia/og-image.png
+```
+
+### 5. 권한 설정
+
+```bash
+# 서버에서 실행
+chown -R www-data:www-data /home/webapp/goldenrabbit/frontend/public/proppedia
+chmod -R 755 /home/webapp/goldenrabbit/frontend/public/proppedia
+```
+
+### 6. Nginx 설정 확인
+
+```bash
+# nginx 설정 확인
+cat /etc/nginx/sites-available/goldenrabbit.conf
+
+# 필요시 설정 추가
+# location /proppedia/ {
+#     try_files $uri $uri/ /proppedia/index.html;
+# }
+
+# nginx 재시작
+systemctl reload nginx
+```
+
+## Flutter Web 배포
+
+### 1. 빌드
+
+```bash
+cd C:\Users\ant19\projects\propedia
+flutter build web --base-href "/proppedia-app/"
+```
+
+### 2. 업로드
+
+```bash
+# 빌드 폴더 업로드
+scp -r build/web/* root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia-app/
+```
+
+## 검증 체크리스트
+
+- [x] https://goldenrabbit.biz/proppedia/ 접속 확인 ✅
+- [x] https://goldenrabbit.biz/proppedia-app/ 접속 확인 ✅
+- [x] https://goldenrabbit.biz/robots.txt 확인 ✅
+- [x] https://goldenrabbit.biz/sitemap.xml 확인 ✅
+- [ ] [Google Mobile-Friendly Test](https://search.google.com/test/mobile-friendly)
+- [ ] [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+- [ ] [Google Rich Results Test](https://search.google.com/test/rich-results)
+- [ ] Google Search Console sitemap 제출
+
+## Google Search Console 설정
+
+1. https://search.google.com/search-console 접속
+2. 속성 추가: https://goldenrabbit.biz
+3. sitemap.xml 제출
+4. URL 검사로 /proppedia/ 색인 요청
+
+## 문제 해결
+
+### 404 에러
+- nginx 설정에서 location 블록 확인
+- 파일 권한 확인
+
+### OG 태그가 표시되지 않음
+- Facebook Debugger에서 캐시 삭제
+- og:image URL이 절대 경로인지 확인
+
+### 이미지가 표시되지 않음
+- 이미지 파일 권한 확인
+- 경로가 올바른지 확인

@@ -13,7 +13,7 @@ class PropediaApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Propedia',
+      title: 'Proppedia 부동산백과',
       debugShowCheckedModeBanner: false,
 
       // 테마 설정

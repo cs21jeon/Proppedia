@@ -253,6 +253,80 @@ Proppedia 부동산백과 첫 번째 버전입니다.
 
 ---
 
+## 10. 테스트 기간 작업 계획 (14일)
+
+### 테스트 시작일
+- **시작일**: 2026-02-20 (테스터 초대 완료)
+- **종료 예정**: 2026-03-06 (14일 후)
+- **프로덕션 출시 가능일**: 2026-03-07 이후
+
+### 필수 작업 (테스트 기간 중)
+
+| 작업 | 설명 | 상태 |
+|-----|------|------|
+| 옵트인 모니터링 | Play Console에서 20명 이상 옵트인 확인 | ⏳ |
+| 피드백 수집 | 테스터 피드백 확인 및 버그 리포트 수집 | ⏳ |
+| 버그 수정 | 발견된 버그 수정 후 새 버전 업로드 | ⏳ |
+| 크래시 모니터링 | Play Console > Android vitals 확인 | ⏳ |
+
+### 권장 작업 (테스트 기간 활용)
+
+#### 1. Flutter Web 배포 (Phase 9) ✅ 완료 (2026-02-20)
+```bash
+# 빌드 (base-href 설정 포함)
+flutter build web --release --base-href "/proppedia-app/"
+
+# 서버 배포
+scp -r build/web/* root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public/proppedia-app/
+```
+- [x] Flutter Web 빌드
+- [x] 서버 배포
+- [x] https://goldenrabbit.biz/proppedia-app/ 접속 확인
+
+**배포 완료 URL**:
+- 앱 소개 랜딩 페이지: https://goldenrabbit.biz/proppedia/
+- Flutter Web 앱: https://goldenrabbit.biz/proppedia-app/
+
+#### 2. iOS 앱 준비 (Phase 10)
+- [ ] Apple Developer Program 가입 ($99/년)
+- [ ] App Store Connect 앱 등록
+- [ ] 프로비저닝 프로파일 생성
+- [ ] IPA 빌드 및 업로드
+
+#### 3. 남은 기능 개선
+개발 계획(calm-forging-simon.md)에서 미완료 항목:
+- [ ] 매물 즐겨찾기 기능 연동
+- [ ] 홈 화면 매물 섹션 추가
+
+### 홍보/마케팅 작업 (2026-02-20 완료)
+
+| 작업 | 상태 |
+|-----|------|
+| 앱 소개 랜딩 페이지 제작 | ✅ 완료 |
+| SEO 메타 태그 설정 | ✅ 완료 |
+| robots.txt / sitemap.xml 배포 | ✅ 완료 |
+| nginx 설정 업데이트 | ✅ 완료 |
+| 블로그 콘텐츠 초안 작성 | ✅ 완료 |
+
+### 선택 작업
+
+| 작업 | 우선순위 |
+|-----|---------|
+| 유닛 테스트 작성 | 낮음 |
+| 위젯 테스트 작성 | 낮음 |
+| 성능 최적화 | 중간 |
+| 오프라인 지원 강화 | 낮음 |
+
+### 프로덕션 출시 전 체크리스트
+
+- [ ] 모든 크래시 이슈 해결
+- [ ] 테스터 피드백 반영 완료
+- [ ] 스토어 등록정보 최종 검토
+- [ ] 출시 노트 작성
+- [ ] 최종 AAB 빌드 및 업로드
+
+---
+
 ## 9. 중요 ID 정리
 
 ```

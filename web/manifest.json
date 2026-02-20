@@ -1,11 +1,11 @@
 {
-    "name": "propedia",
-    "short_name": "propedia",
+    "name": "Proppedia 부동산백과",
+    "short_name": "부동산백과",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "theme_color": "#2196F3",
+    "description": "건축물대장, 토지대장, 공시지가를 한눈에 조회하는 무료 부동산 정보 앱",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

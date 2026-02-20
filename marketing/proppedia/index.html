@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- SEO Meta Tags -->
+    <title>Proppedia 부동산백과 - 건물과 토지에 관한 모든 정보</title>
+    <meta name="description" content="건축물대장, 토지대장, 공시지가를 한눈에 조회하세요. 도로명, 지번, 지도로 검색 가능한 무료 부동산 정보 앱입니다.">
+    <meta name="keywords" content="건축물대장, 토지대장, 공시지가, 부동산앱, 건축물조회, 부동산정보, 토지정보, 건물정보">
+    <meta name="author" content="금토끼부동산">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://goldenrabbit.biz/proppedia/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://goldenrabbit.biz/proppedia/">
+    <meta property="og:title" content="Proppedia 부동산백과 - 건물과 토지에 관한 모든 정보">
+    <meta property="og:description" content="건축물대장, 토지대장, 공시지가를 한눈에! 도로명, 지번, 지도로 쉽게 검색하세요.">
+    <meta property="og:image" content="https://goldenrabbit.biz/proppedia/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="Proppedia 부동산백과">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Proppedia 부동산백과 - 건물과 토지에 관한 모든 정보">
+    <meta name="twitter:description" content="건축물대장, 토지대장, 공시지가를 한눈에!">
+    <meta name="twitter:image" content="https://goldenrabbit.biz/proppedia/og-image.png">
+
+    <!-- App Link -->
+    <meta name="google-play-app" content="app-id=com.proppedia.app">
+    <link rel="alternate" href="android-app://com.proppedia.app/https/goldenrabbit.biz/proppedia">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": "부동산백과",
+        "alternateName": "Proppedia",
+        "description": "건축물대장, 토지대장, 공시지가를 한눈에 조회할 수 있는 무료 부동산 정보 앱입니다.",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Android",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KRW"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "5.0",
+            "ratingCount": "1"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "금토끼부동산",
+            "url": "https://goldenrabbit.biz"
+        },
+        "downloadUrl": "https://play.google.com/store/apps/details?id=com.proppedia.app",
+        "installUrl": "https://play.google.com/store/apps/details?id=com.proppedia.app",
+        "screenshot": [
+            "https://goldenrabbit.biz/proppedia/screenshots/01_home.png",
+            "https://goldenrabbit.biz/proppedia/screenshots/04_result_1.png",
+            "https://goldenrabbit.biz/proppedia/screenshots/06_map_search.png"
+        ],
+        "softwareVersion": "1.0.1",
+        "datePublished": "2026-02-19",
+        "inLanguage": "ko"
+    }
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --primary-dark: #1976D2;
+            --secondary-color: #FF9800;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --background: #FFFFFF;
+            --surface: #F5F5F5;
+            --max-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background);
+        }
+
+        /* Header */
+        header {
+            background: var(--background);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .logo span {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .header-cta {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .header-cta:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 20px 60px;
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .hero-text h1 span {
+            color: var(--primary-color);
+        }
+
+        .hero-text p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .play-badge {
+            height: 60px;
+            transition: transform 0.3s;
+        }
+
+        .play-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .phone-mockup {
+            position: relative;
+            width: 240px;
+        }
+
+        .phone-mockup img {
+            width: 100%;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .phone-mockup:nth-child(2) {
+            margin-top: 40px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+            background: var(--background);
+        }
+
+        .features-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            padding: 40px 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Screenshots Section */
+        .screenshots {
+            padding: 80px 20px;
+            background: var(--surface);
+        }
+
+        .screenshots-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .screenshots-gallery {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            scroll-snap-type: x mandatory;
+        }
+
+        .screenshot-item {
+            flex: 0 0 auto;
+            width: 220px;
+            scroll-snap-align: center;
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .screenshot-item p {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Search Methods Section */
+        .search-methods {
+            padding: 80px 20px;
+            background: var(--background);
+        }
+
+        .search-methods-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .method-card {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .method-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .method-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+        }
+
+        .method-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 80px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            text-align: center;
+            color: white;
+        }
+
+        .cta-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .cta p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .cta .play-badge {
+            height: 70px;
+        }
+
+        .qr-code {
+            margin-top: 30px;
+        }
+
+        .qr-code img {
+            width: 120px;
+            height: 120px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .qr-code p {
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            background: #212121;
+            color: #B0B0B0;
+            padding: 60px 20px 30px;
+        }
+
+        .footer-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+        }
+
+        .footer-brand h3 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+        }
+
+        .footer-brand p {
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .footer-links h4 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #B0B0B0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: var(--max-width);
+            margin: 40px auto 0;
+            padding-top: 20px;
+            border-top: 1px solid #424242;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text h1 {
+                font-size: 2rem;
+            }
+
+            .hero-badges {
+                justify-content: center;
+            }
+
+            .hero-image {
+                order: -1;
+            }
+
+            .phone-mockup {
+                width: 180px;
+            }
+
+            .features-grid,
+            .methods-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .hero {
+                min-height: auto;
+                padding: 100px 20px 40px;
+            }
+
+            .hero-text h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-image {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .phone-mockup {
+                width: 200px;
+            }
+
+            .phone-mockup:nth-child(2) {
+                display: none;
+            }
+
+            .section-title h2 {
+                font-size: 1.75rem;
+            }
+
+            .header-cta {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <a href="#" class="logo">
+                <img src="logo.png" alt="부동산백과 로고">
+                <span>부동산백과</span>
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=com.proppedia.app" class="header-cta" target="_blank" rel="noopener">
+                앱 다운로드
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>
+                    건축물대장, 토지대장, 공시지가를<br>
+                    <span>한눈에!</span>
+                </h1>
+                <p>
+                    복잡한 부동산 정보, 이제 쉽게 조회하세요.<br>
+                    도로명, 지번, 지도로 검색하는 무료 부동산 정보 앱
+                </p>
+                <div class="hero-badges">
+                    <a href="https://play.google.com/store/apps/details?id=com.proppedia.app" target="_blank" rel="noopener">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 다운로드" class="play-badge">
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="phone-mockup">
+                    <img src="screenshots/01_home.png" alt="부동산백과 홈 화면">
+                </div>
+                <div class="phone-mockup">
+                    <img src="screenshots/04_result_1.png" alt="부동산백과 검색 결과">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-content">
+            <div class="section-title">
+                <h2>주요 기능</h2>
+                <p>부동산 정보 조회에 필요한 모든 것</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h3>건축물 정보</h3>
+                    <p>건축물대장의 상세 정보를 한눈에 확인하세요. 건물 용도, 면적, 층수 등 모든 정보를 제공합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>토지 정보</h3>
+                    <p>토지대장 정보를 쉽게 조회하세요. 지목, 면적, 소유자 정보 등을 확인할 수 있습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>공시가격</h3>
+                    <p>개별공시지가와 공동주택 공시가격을 조회하세요. 연도별 가격 변동도 확인 가능합니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Methods Section -->
+    <section class="search-methods" id="search">
+        <div class="search-methods-content">
+            <div class="section-title">
+                <h2>3가지 검색 방식</h2>
+                <p>원하는 방식으로 부동산 정보를 찾으세요</p>
+            </div>
+            <div class="methods-grid">
+                <div class="method-card">
+                    <div class="icon">🏠</div>
+                    <h3>도로명 주소 검색</h3>
+                    <p>도로명 주소로 빠르게 검색하세요</p>
+                </div>
+                <div class="method-card">
+                    <div class="icon">📍</div>
+                    <h3>지번 주소 검색</h3>
+                    <p>지번 주소로 정확하게 검색하세요</p>
+                </div>
+                <div class="method-card">
+                    <div class="icon">🗺️</div>
+                    <h3>지도 검색</h3>
+                    <p>지도에서 직접 위치를 선택하세요</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="screenshots" id="screenshots">
+        <div class="screenshots-content">
+            <div class="section-title">
+                <h2>앱 미리보기</h2>
+                <p>직관적인 UI로 쉽게 사용하세요</p>
+            </div>
+            <div class="screenshots-gallery">
+                <div class="screenshot-item">
+                    <img src="screenshots/01_home.png" alt="홈 화면" loading="lazy">
+                    <p>홈 화면</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/02_road_search.png" alt="도로명 검색" loading="lazy">
+                    <p>도로명 검색</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/03_jibun_search.png" alt="지번 검색" loading="lazy">
+                    <p>지번 검색</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/04_result_1.png" alt="검색 결과" loading="lazy">
+                    <p>검색 결과</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/05_result_2.png" alt="상세 정보" loading="lazy">
+                    <p>상세 정보</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/06_map_search.png" alt="지도 검색" loading="lazy">
+                    <p>지도 검색</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/07_history.png" alt="검색 기록" loading="lazy">
+                    <p>검색 기록</p>
+                </div>
+                <div class="screenshot-item">
+                    <img src="screenshots/08_favorites.png" alt="즐겨찾기" loading="lazy">
+                    <p>즐겨찾기</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-content">
+            <h2>지금 바로 시작하세요</h2>
+            <p>무료로 부동산 정보를 조회해 보세요</p>
+            <a href="https://play.google.com/store/apps/details?id=com.proppedia.app" target="_blank" rel="noopener">
+                <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 다운로드" class="play-badge">
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>금토끼부동산</h3>
+                <p>
+                    부동산 정보를 더 쉽고 편리하게 제공합니다.<br>
+                    문의: goldenrabbit.biz@gmail.com
+                </p>
+            </div>
+            <div class="footer-links">
+                <h4>바로가기</h4>
+                <ul>
+                    <li><a href="#features">주요 기능</a></li>
+                    <li><a href="#search">검색 방식</a></li>
+                    <li><a href="#screenshots">앱 미리보기</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>법적 고지</h4>
+                <ul>
+                    <li><a href="https://goldenrabbit.biz/privacy-policy" target="_blank">개인정보처리방침</a></li>
+                    <li><a href="https://goldenrabbit.biz/terms" target="_blank">이용약관</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 금토끼부동산. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
