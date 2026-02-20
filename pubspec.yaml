@@ -1,7 +1,7 @@
 name: propedia
 description: Propedia - 부동산백과
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -60,6 +60,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.1
 
+  # 앱 아이콘
+  flutter_launcher_icons: ^0.14.3
+
   # 코드 생성
   build_runner: ^2.4.8
   freezed: ^2.4.6
@@ -83,3 +86,20 @@ flutter:
         - asset: assets/fonts/NotoSansKR-Regular.ttf
         - asset: assets/fonts/NotoSansKR-Bold.ttf
           weight: 700
+
+# 앱 아이콘 설정
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#FFFFFF"
+  web:
+    generate: true
+    background_color: "#FFFFFF"
+  windows:
+    generate: true
+  macos:
+    generate: true
+  image_path: "assets/images/proppedia_logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/proppedia_logo.png"
