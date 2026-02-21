@@ -1,6 +1,6 @@
 # 마케팅 파일 배포 가이드
 
-## 배포 현황 (2026-02-20 완료)
+## 배포 현황 (2026-02-22 업데이트)
 
 | URL | 설명 | 상태 |
 |-----|------|------|
@@ -8,6 +8,19 @@
 | https://goldenrabbit.biz/proppedia-app/ | Flutter Web 앱 | ✅ 완료 |
 | https://goldenrabbit.biz/robots.txt | 크롤링 규칙 | ✅ 완료 |
 | https://goldenrabbit.biz/sitemap.xml | 사이트맵 | ✅ 완료 |
+
+### 랜딩 페이지 업데이트 이력
+
+| 날짜 | 변경 내용 |
+|------|----------|
+| 2026-02-20 | 최초 배포 (앱 미리보기, 기능 소개) |
+| 2026-02-22 | 섹션 분리 및 PDF 기능 추가 |
+
+### 2026-02-22 업데이트 내용
+- **앱 미리보기 섹션** (6개 이미지): 홈, 도로명/지번/지도 검색, 검색 결과
+- **편리한 부가 기능 섹션** (5개 이미지): 검색기록, 즐겨찾기, 카카오톡 공유, PDF 결과물 미리보기, PDF 인쇄/저장
+- PDF 이미지 높이 통일 (280px)
+- 회원가입/로그인 유도 문구 추가
 
 ## 파일 구조
 
@@ -22,6 +35,19 @@ marketing/
 ├── sitemap.xml             # 사이트맵
 ├── deploy.ps1              # PowerShell 배포 스크립트
 └── deploy.sh               # Bash 배포 스크립트
+
+screenshots/                 # 랜딩 페이지 이미지
+├── 01_home.png             # 홈 화면
+├── 02_road_search.png      # 도로명 검색
+├── 03_jibun_search.png     # 지번 검색
+├── 04_result_1.png         # 검색 결과 1
+├── 05_result_2.png         # 검색 결과 2
+├── 06_map_search.png       # 지도 검색
+├── 07_history.png          # 검색기록
+├── 08_favorites.png        # 즐겨찾기
+├── KakaoTalk_20260221_232554552.jpg  # 카카오톡 공유
+├── print pdf 001.png       # PDF 결과물 미리보기
+└── print pdf 002.png       # PDF 인쇄/저장
 ```
 
 ## 서버 배포
