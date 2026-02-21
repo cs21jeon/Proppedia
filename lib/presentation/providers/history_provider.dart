@@ -42,8 +42,15 @@ class HistoryState {
 // 검색 기록 Provider
 class HistoryNotifier extends StateNotifier<HistoryState> {
   final HistoryRepository _repository;
+  final Ref _ref;
 
-  HistoryNotifier(this._repository) : super(const HistoryState());
+  HistoryNotifier(this._repository, this._ref) : super(const HistoryState());
+
+  /// 게스트 모드 여부 확인
+  bool get _isGuestMode {
+    final authState = _ref.read(authProvider);
+    return authState.status == AuthStatus.guest;
+  }
 
   /// 검색 기록 추가
   Future<void> addHistory({
@@ -74,6 +81,7 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
         buildingType: buildingType,
         latitude: latitude,
         longitude: longitude,
+        skipServerSync: _isGuestMode,
       );
 
       // 목록 갱신
@@ -181,9 +189,15 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
       state = state.copyWith(isLoading: false);
     }
   }
+
+  /// 상태 초기화 (로그아웃 시 호출) - 로컬 DB도 함께 삭제
+  Future<void> reset() async {
+    await _repository.clearHistory();
+    state = const HistoryState();
+  }
 }
 
 final historyProvider = StateNotifierProvider<HistoryNotifier, HistoryState>((ref) {
   final repository = ref.watch(historyRepositoryProvider);
-  return HistoryNotifier(repository);
+  return HistoryNotifier(repository, ref);
 });

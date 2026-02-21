@@ -9,6 +9,7 @@ class FavoritesRepository {
   FavoritesRepository(Dio dio) : _api = FavoritesApi(dio);
 
   /// 즐겨찾기 추가 (로컬 + 서버)
+  /// [skipServerSync] - true면 서버 동기화 건너뛰기 (게스트 모드)
   Future<bool> addFavorite({
     required String displayAddress,
     String? roadAddress,
@@ -20,6 +21,7 @@ class FavoritesRepository {
     String? hoName,
     String? buildingType,
     String? memo,
+    bool skipServerSync = false,
   }) async {
     // 로컬 저장
     final favorite = Favorite(
@@ -38,6 +40,11 @@ class FavoritesRepository {
     );
 
     await DatabaseService.addFavorite(favorite);
+
+    // 게스트 모드면 서버 동기화 건너뛰기
+    if (skipServerSync) {
+      return true;
+    }
 
     // 서버 저장
     try {

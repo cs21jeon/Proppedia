@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kakao_map_plugin/kakao_map_plugin.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/data/dto/building_dto.dart';
+import 'package:propedia/presentation/providers/auth_provider.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/providers/map_provider.dart';
 import 'package:propedia/presentation/providers/pdf_provider.dart';
 import 'package:propedia/presentation/providers/history_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
+import 'package:propedia/presentation/widgets/common/login_prompt_dialog.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -258,7 +260,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         hoName: _selectedHo,
         buildingType: building?.type,
       );
-      if (mounted) {
+
+      if (!mounted) return;
+
+      // 게스트 모드면 로그인 유도 다이얼로그 표시
+      final authState = ref.read(authProvider);
+      if (authState.status == AuthStatus.guest) {
+        await LoginPromptDialog.show(
+          context,
+          title: '즐겨찾기 저장됨',
+          message: '로그인하면 모든 기기에서 즐겨찾기를 동기화할 수 있습니다.',
+        );
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('즐겨찾기에 등록되었습니다'),

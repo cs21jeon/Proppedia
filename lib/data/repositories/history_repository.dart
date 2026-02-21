@@ -9,6 +9,7 @@ class HistoryRepository {
   HistoryRepository(Dio dio) : _api = HistoryApi(dio);
 
   /// 검색 기록 저장 (로컬 + 서버)
+  /// [skipServerSync] - true면 서버 동기화 건너뛰기 (게스트 모드)
   Future<void> addHistory({
     required String searchType,
     required String displayAddress,
@@ -22,6 +23,7 @@ class HistoryRepository {
     String? buildingType,
     double? latitude,
     double? longitude,
+    bool skipServerSync = false,
   }) async {
     // 로컬 저장
     final history = SearchHistory(
@@ -40,6 +42,11 @@ class HistoryRepository {
     );
 
     await DatabaseService.addSearchHistory(history);
+
+    // 게스트 모드면 서버 동기화 건너뛰기
+    if (skipServerSync) {
+      return;
+    }
 
     // 서버 저장 (실패해도 로컬은 유지)
     try {

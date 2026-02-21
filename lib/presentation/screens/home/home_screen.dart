@@ -4,15 +4,60 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
+import 'package:propedia/presentation/providers/history_provider.dart';
+import 'package:propedia/presentation/providers/favorites_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 import 'package:propedia/presentation/widgets/common/app_drawer.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 홈 화면 진입 시 데이터 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  void _loadData() {
+    final authState = ref.read(authProvider);
+
+    // 로컬 데이터 로드
+    ref.read(historyProvider.notifier).loadLocalHistory();
+    ref.read(favoritesProvider.notifier).loadLocalFavorites();
+
+    // 로그인 상태면 서버 동기화도 수행
+    if (authState.status == AuthStatus.authenticated) {
+      ref.read(historyProvider.notifier).syncFromServer();
+      ref.read(favoritesProvider.notifier).syncFromServer();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 로그인 상태 변경 감지
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (previous?.status != next.status) {
+        if (next.status == AuthStatus.authenticated) {
+          // 로그인됨 - 서버 동기화
+          ref.read(historyProvider.notifier).syncFromServer();
+          ref.read(favoritesProvider.notifier).syncFromServer();
+        } else if (next.status == AuthStatus.guest) {
+          // 로그아웃됨 - 로컬 데이터 로드
+          ref.read(historyProvider.notifier).loadLocalHistory();
+          ref.read(favoritesProvider.notifier).loadLocalFavorites();
+        }
+      }
+    });
+
     final authState = ref.watch(authProvider);
     final user = authState.user;
 
@@ -66,54 +111,57 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 사용자 정보 카드
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: AppColors.primary,
-                        child: Text(
-                          (user?.name?.isNotEmpty == true
-                                  ? user!.name![0]
-                                  : user?.email[0] ?? 'U')
-                              .toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+              // 사용자 정보 카드 (게스트/로그인 분기)
+              if (authState.status == AuthStatus.guest)
+                _buildGuestCard()
+              else
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            (user?.name?.isNotEmpty == true
+                                    ? user!.name![0]
+                                    : user?.email[0] ?? 'U')
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user?.name ?? '사용자',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              user?.email ?? '',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: Colors.grey[600]),
-                            ),
-                          ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.name ?? '사용자',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?.email ?? '',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 24),
 
               // 검색 방식 선택
@@ -251,6 +299,81 @@ class HomeScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// 게스트 모드 카드
+  Widget _buildGuestCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey[400],
+                  child: const Icon(
+                    Icons.person_outline,
+                    size: 32,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '체험 모드',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '로그인하면 모든 기기에서 데이터를 동기화할 수 있습니다',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/login'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('로그인'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => context.push('/register'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('회원가입'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

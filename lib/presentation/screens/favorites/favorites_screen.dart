@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
+import 'package:propedia/presentation/providers/auth_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
@@ -19,11 +20,14 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 진입 시 로컬 즐겨찾기 로드 및 서버 동기화
+    // 화면 진입 시 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(favoritesProvider.notifier).loadLocalFavorites();
-      // 서버에서 즐겨찾기 동기화 (로컬에 없는 것만 추가)
-      await ref.read(favoritesProvider.notifier).syncFromServer();
+      // 로그인 상태에서만 서버 동기화
+      final authState = ref.read(authProvider);
+      if (authState.status == AuthStatus.authenticated) {
+        await ref.read(favoritesProvider.notifier).syncFromServer();
+      }
     });
   }
 
@@ -194,6 +198,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   }
 
   Widget _buildBody(FavoritesState state) {
+    final authState = ref.watch(authProvider);
+    final isGuest = authState.status == AuthStatus.guest;
+
     if (state.isLoading) {
       return const Center(
         child: Column(
@@ -220,34 +227,52 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              '즐겨찾기가 없습니다',
+              isGuest ? '로그인 후 즐겨찾기 기능을\n사용할 수 있습니다' : '즐겨찾기가 없습니다',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
+                color: Colors.grey[600],
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '관심 있는 부동산을 즐겨찾기에 추가해보세요',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.go('/home'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            if (isGuest) ...[
+              ElevatedButton(
+                onPressed: () => context.push('/login'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: const Text('로그인'),
               ),
-              child: const Text('검색하러 가기'),
-            ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => context.go('/home'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('게스트로 검색하기'),
+              ),
+            ] else
+              ElevatedButton(
+                onPressed: () => context.go('/home'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('검색하러 가기'),
+              ),
           ],
         ),
       );

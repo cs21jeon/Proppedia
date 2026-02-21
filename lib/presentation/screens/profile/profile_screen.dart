@@ -19,11 +19,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 진입 시 로컬 데이터 로드
+    // 화면 진입 시 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(historyProvider.notifier).loadLocalHistory();
-      ref.read(favoritesProvider.notifier).loadLocalFavorites();
+      _loadData();
     });
+  }
+
+  void _loadData() {
+    final authState = ref.read(authProvider);
+
+    // 로컬 데이터 로드
+    ref.read(historyProvider.notifier).loadLocalHistory();
+    ref.read(favoritesProvider.notifier).loadLocalFavorites();
+
+    // 로그인 상태면 서버 동기화도 수행
+    if (authState.status == AuthStatus.authenticated) {
+      ref.read(historyProvider.notifier).syncFromServer();
+      ref.read(favoritesProvider.notifier).syncFromServer();
+    }
   }
 
   Future<void> _logout() async {
@@ -46,12 +59,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     if (confirmed == true) {
+      // 로컬 DB 및 상태 초기화
+      await ref.read(historyProvider.notifier).reset();
+      await ref.read(favoritesProvider.notifier).reset();
+      // 로그아웃
       ref.read(authProvider.notifier).logout();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 로그인 상태 변경 감지
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (previous?.status != next.status) {
+        if (next.status == AuthStatus.authenticated) {
+          // 로그인됨 - 데이터 로드 및 서버 동기화
+          _loadData();
+        } else if (next.status == AuthStatus.guest) {
+          // 로그아웃됨 - 이미 reset 호출됨
+        }
+      }
+    });
+
     final authState = ref.watch(authProvider);
     final user = authState.user;
     final themeMode = ref.watch(themeModeProvider);
@@ -76,8 +105,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.read(historyProvider.notifier).loadLocalHistory();
-          ref.read(favoritesProvider.notifier).loadLocalFavorites();
+          _loadData();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -97,8 +125,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildLocalStatsSection(historyState, favoritesState),
               const SizedBox(height: 24),
 
-              // 로그아웃 버튼
-              _buildLogoutButton(),
+              // 로그아웃 버튼 (로그인한 경우에만 표시)
+              if (authState.status == AuthStatus.authenticated)
+                _buildLogoutButton(),
               const SizedBox(height: 16),
             ],
           ),
@@ -115,6 +144,83 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildUserInfoCard(dynamic user) {
+    final authState = ref.watch(authProvider);
+    final isGuest = authState.status == AuthStatus.guest;
+
+    if (isGuest) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: Colors.grey[400],
+                    child: const Icon(
+                      Icons.person_outline,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '체험 모드',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '로그인하면 모든 기기에서 데이터를 동기화할 수 있습니다',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => context.push('/login'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('로그인'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => context.push('/register'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('회원가입'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),

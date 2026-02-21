@@ -41,6 +41,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final isAuthenticated = authState.status == AuthStatus.authenticated;
+      final isGuest = authState.status == AuthStatus.guest;
+      final canAccess = isAuthenticated || isGuest;
       final isLoading = authState.status == AuthStatus.loading ||
           authState.status == AuthStatus.initial;
       final isAuthRoute = state.matchedLocation == '/login' ||
@@ -51,26 +53,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // 인증되지 않았고 인증 페이지가 아니면 로그인으로
-      if (!isAuthenticated && !isAuthRoute && state.matchedLocation != '/') {
-        return '/login';
-      }
-
-      // 인증되었고 인증 페이지면 홈으로
+      // 인증된 사용자가 인증 페이지 접근하면 홈으로 (guest는 로그인 가능)
       if (isAuthenticated && isAuthRoute) {
         return '/home';
       }
 
-      // 인증되었고 스플래시 화면이면 홈으로
-      if (isAuthenticated && state.matchedLocation == '/') {
+      // 인증되었거나 게스트이고 스플래시 화면이면 홈으로
+      if (canAccess && state.matchedLocation == '/') {
         return '/home';
-      }
-
-      // 인증되지 않았고 스플래시 화면이면 로그인으로
-      if (!isAuthenticated &&
-          !isLoading &&
-          state.matchedLocation == '/') {
-        return '/login';
       }
 
       return null;

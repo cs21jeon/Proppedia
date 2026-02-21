@@ -35,6 +35,7 @@ enum AuthStatus {
   loading,
   authenticated,
   unauthenticated,
+  guest,
   error,
 }
 
@@ -78,10 +79,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (user != null) {
         state = AuthState(status: AuthStatus.authenticated, user: user);
       } else {
-        state = const AuthState(status: AuthStatus.unauthenticated);
+        // 토큰 없으면 게스트 모드로 진입
+        state = const AuthState(status: AuthStatus.guest);
       }
     } catch (e) {
-      state = const AuthState(status: AuthStatus.unauthenticated);
+      // 에러 발생해도 게스트 모드로 진입
+      state = const AuthState(status: AuthStatus.guest);
     }
   }
 
@@ -134,7 +137,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// 로그아웃
   Future<void> logout() async {
     await _authRepository.logout();
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    state = const AuthState(status: AuthStatus.guest);
   }
 
   /// 에러 상태 초기화

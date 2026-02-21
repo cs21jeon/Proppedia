@@ -136,9 +136,21 @@
             height: 40px;
         }
 
-        .logo span {
-            font-size: 1.25rem;
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .logo-text .title {
+            font-size: 1.1rem;
             font-weight: 700;
+        }
+
+        .logo-text .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
         }
 
         .header-cta {
@@ -544,6 +556,27 @@
             }
         }
     </style>
+
+    <script>
+    // PC/모바일 감지 및 UI 분기
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+            .test(navigator.userAgent);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const pcElements = document.querySelectorAll('.pc-only');
+        const mobileElements = document.querySelectorAll('.mobile-only');
+
+        if (isMobileDevice()) {
+            pcElements.forEach(el => el.style.display = 'none');
+            mobileElements.forEach(el => el.style.display = 'block');
+        } else {
+            pcElements.forEach(el => el.style.display = 'block');
+            mobileElements.forEach(el => el.style.display = 'none');
+        }
+    });
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -551,9 +584,12 @@
         <div class="header-content">
             <a href="#" class="logo">
                 <img src="logo.png" alt="부동산백과 로고">
-                <span>부동산백과</span>
+                <div class="logo-text">
+                    <span class="title">Proppedia</span>
+                    <span class="subtitle">부동산백과</span>
+                </div>
             </a>
-            <a href="/proppedia-app/" class="header-cta">
+            <a href="/app/" class="header-cta">
                 웹에서 체험하기
             </a>
         </div>
@@ -564,23 +600,34 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1>
-                    건축물대장, 토지대장, 공시지가를<br>
+                    토지, 건물에 관한 모든 정보<br>
                     <span>한눈에!</span>
                 </h1>
                 <p>
                     복잡한 부동산 정보, 이제 쉽게 조회하세요.<br>
                     도로명, 지번, 지도로 검색하는 무료 부동산 정보 앱
                 </p>
-                <div class="hero-badges">
-                    <div style="background: #FF9800; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
-                        📱 곧 앱 출시 예정
-                    </div>
-                </div>
-                <div style="margin-top: 20px;">
-                    <a href="/proppedia-app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
-                        🌐 웹버전으로 먼저 만나보세요
+                <!-- PC 사용자 -->
+                <div class="pc-only">
+                    <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                        💻 웹에서 바로 시작하기
                     </a>
-                    <p style="margin-top: 12px; color: #757575; font-size: 0.9rem;">설치 없이 브라우저에서 바로 체험하세요</p>
+                    <p style="margin-top: 12px; color: #757575; font-size: 0.9rem;">PC에서는 웹 버전을 이용해주세요</p>
+                </div>
+
+                <!-- 모바일 사용자 -->
+                <div class="mobile-only" style="display: none;">
+                    <div class="hero-badges">
+                        <div style="background: #FF9800; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                            📱 곧 앱 출시 예정
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                            🌐 웹에서 먼저 체험하기
+                        </a>
+                        <p style="margin-top: 12px; color: #757575; font-size: 0.9rem;">설치 없이 브라우저에서 바로 체험하세요</p>
+                    </div>
                 </div>
             </div>
             <div class="hero-image">
@@ -598,8 +645,8 @@
     <section class="features" id="features">
         <div class="features-content">
             <div class="section-title">
-                <h2>주요 기능</h2>
-                <p>부동산 정보 조회에 필요한 모든 것</p>
+                <h2>조회 정보</h2>
+                <p>부동산에 관한 다양한 정보</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
@@ -610,12 +657,12 @@
                 <div class="feature-card">
                     <div class="feature-icon">🗺️</div>
                     <h3>토지 정보</h3>
-                    <p>토지대장 정보를 쉽게 조회하세요. 지목, 면적, 소유자 정보 등을 확인할 수 있습니다.</p>
+                    <p>토지대장 정보를 쉽게 조회하세요. 지목, 면적, 가격정보를 확인할 수 있습니다.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">💰</div>
                     <h3>공시가격</h3>
-                    <p>개별공시지가와 공동주택 공시가격을 조회하세요. 연도별 가격 변동도 확인 가능합니다.</p>
+                    <p>개별공시지가와 공동주택 공시가격을 조회하세요. 최신 가격 정보를 확인 가능합니다.</p>
                 </div>
             </div>
         </div>
@@ -696,11 +743,23 @@
     <section class="cta">
         <div class="cta-content">
             <h2>지금 바로 시작하세요</h2>
-            <p>설치 없이 웹에서 바로 체험해 보세요</p>
-            <a href="/proppedia-app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 10px;">
-                🌐 웹버전으로 체험하기
-            </a>
-            <p style="margin-top: 20px; font-size: 0.95rem; opacity: 0.9;">📱 앱은 곧 Google Play에서 만나보실 수 있습니다</p>
+
+            <!-- PC 사용자 -->
+            <div class="pc-only">
+                <p>PC에서는 웹 버전을 이용해주세요</p>
+                <a href="/app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 10px;">
+                    💻 웹에서 바로 시작하기
+                </a>
+            </div>
+
+            <!-- 모바일 사용자 -->
+            <div class="mobile-only" style="display: none;">
+                <p>설치 없이 웹에서 바로 체험해 보세요</p>
+                <a href="/app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 10px;">
+                    🌐 웹에서 먼저 체험하기
+                </a>
+                <p style="margin-top: 20px; font-size: 0.95rem; opacity: 0.9;">📱 앱은 곧 Google Play에서 만나보실 수 있습니다</p>
+            </div>
         </div>
     </section>
 
@@ -711,7 +770,7 @@
                 <h3>금토끼부동산</h3>
                 <p>
                     부동산 정보를 더 쉽고 편리하게 제공합니다.<br>
-                    문의: goldenrabbit.biz@gmail.com
+                    문의: cs21.jeon@gmail.com
                 </p>
             </div>
             <div class="footer-links">
@@ -725,8 +784,8 @@
             <div class="footer-links">
                 <h4>법적 고지</h4>
                 <ul>
-                    <li><a href="https://goldenrabbit.biz/privacy-policy" target="_blank">개인정보처리방침</a></li>
-                    <li><a href="https://goldenrabbit.biz/terms" target="_blank">이용약관</a></li>
+                    <li><a href="https://goldenrabbit.biz/privacy-policy.html" target="_blank">개인정보처리방침</a></li>
+                    <li><a href="https://goldenrabbit.biz/terms-of-service.html" target="_blank">이용약관</a></li>
                 </ul>
             </div>
         </div>

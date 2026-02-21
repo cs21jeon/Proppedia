@@ -41,8 +41,15 @@ class FavoritesState {
 // 즐겨찾기 Provider
 class FavoritesNotifier extends StateNotifier<FavoritesState> {
   final FavoritesRepository _repository;
+  final Ref _ref;
 
-  FavoritesNotifier(this._repository) : super(const FavoritesState());
+  FavoritesNotifier(this._repository, this._ref) : super(const FavoritesState());
+
+  /// 게스트 모드 여부 확인
+  bool get _isGuestMode {
+    final authState = _ref.read(authProvider);
+    return authState.status == AuthStatus.guest;
+  }
 
   /// 즐겨찾기 추가
   Future<bool> addFavorite({
@@ -68,6 +75,7 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
       hoName: hoName,
       buildingType: buildingType,
       memo: memo,
+      skipServerSync: _isGuestMode,
     );
 
     if (result) {
@@ -201,9 +209,15 @@ class FavoritesNotifier extends StateNotifier<FavoritesState> {
       state = state.copyWith(isLoading: false);
     }
   }
+
+  /// 상태 초기화 (로그아웃 시 호출) - 로컬 DB도 함께 삭제
+  Future<void> reset() async {
+    await _repository.clearFavorites();
+    state = const FavoritesState();
+  }
 }
 
 final favoritesProvider = StateNotifierProvider<FavoritesNotifier, FavoritesState>((ref) {
   final repository = ref.watch(favoritesRepositoryProvider);
-  return FavoritesNotifier(repository);
+  return FavoritesNotifier(repository, ref);
 });
