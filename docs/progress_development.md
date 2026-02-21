@@ -1920,3 +1920,77 @@ flutter_launcher_icons:
 
 ---
 
+### 2026-02-22: 게스트 모드 구현 및 랜딩 페이지 업데이트
+
+#### 1. 게스트 모드 (비로그인 체험 후 가입 유도)
+
+**목표**: 로그인 없이 기본 기능 사용 가능, 개인화 기능 사용 시 로그인 유도
+
+**기능 정책**:
+| 기능 | 비로그인 | 로그인 |
+|---|:---:|:---:|
+| 주소 검색 | O | O |
+| 건축물/토지 정보 조회 | O | O |
+| PDF 미리보기/저장/공유 | O | O |
+| 검색기록 (로컬) | X | O |
+| 즐겨찾기 (로컬) | X | O |
+| 서버 동기화 | X | O |
+
+**수정된 파일**:
+- `lib/presentation/providers/auth_provider.dart` - `AuthStatus.guest` 추가
+- `lib/core/router/app_router.dart` - 게스트 상태 접근 허용
+- `lib/presentation/screens/home/home_screen.dart` - 게스트 모드 UI, 인증 상태 변경 감지
+- `lib/presentation/screens/profile/profile_screen.dart` - 게스트 모드 UI, 로그아웃 시 데이터 리셋
+- `lib/presentation/screens/history/history_screen.dart` - 게스트 안내 메시지
+- `lib/presentation/screens/favorites/favorites_screen.dart` - 게스트 안내 메시지
+- `lib/presentation/screens/search/result_screen.dart` - 즐겨찾기 시 로그인 유도
+- `lib/presentation/providers/history_provider.dart` - `reset()` 로컬 DB 삭제, `skipServerSync`
+- `lib/presentation/providers/favorites_provider.dart` - `reset()` 로컬 DB 삭제, `skipServerSync`
+- `lib/data/repositories/history_repository.dart` - `skipServerSync` 파라미터
+- `lib/data/repositories/favorites_repository.dart` - `skipServerSync` 파라미터
+- `lib/presentation/widgets/common/login_prompt_dialog.dart` - 신규 (로그인 유도 다이얼로그)
+
+**주요 변경 사항**:
+- 앱 시작 시 토큰 없으면 `guest` 상태로 진입 (홈 화면 표시)
+- 게스트 모드에서 검색기록/즐겨찾기 화면 진입 시 로그인 안내 표시
+- 즐겨찾기 추가 시 로그인 유도 다이얼로그 표시
+- 로그아웃 시 로컬 DB(Hive) 데이터도 함께 삭제 (`reset()` 메서드 수정)
+
+#### 2. 랜딩 페이지 업데이트
+
+**URL**: https://goldenrabbit.biz/proppedia/
+
+**변경 사항**:
+- 이미지 경로 통합: `screenshots/` 폴더 사용
+- 앱 미리보기 섹션: 홈, 도로명 검색, 지번 검색, 검색 결과, 상세 정보, 지도 검색 (6개)
+- 편리한 부가 기능 섹션: 검색 기록, 즐겨찾기, PDF 저장
+  - 설명: "회원가입/로그인을 통해 더 편리하게 이용하세요"
+- PDF 이미지 높이 통일 (280px)
+
+**추가된 스크린샷**:
+- `KakaoTalk_20260221_232554552.jpg` - PDF 저장 (모바일)
+- `print pdf 001.png` - PDF 인쇄/저장 (PC)
+- `print pdf 002.png` - PDF 결과물 미리보기
+
+**정리**:
+- `/var/www/proppedia/` 폴더 삭제 (미사용)
+- 이미지는 `/home/webapp/goldenrabbit/frontend/public/proppedia/screenshots/`에 저장
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `auth_provider.dart` | `AuthStatus.guest` 추가 |
+| `app_router.dart` | 게스트 상태 접근 허용 |
+| `home_screen.dart` | 게스트 모드 UI, `ref.listen` 인증 상태 감지 |
+| `profile_screen.dart` | 게스트 모드 UI, 로그아웃 시 `await reset()` |
+| `history_screen.dart` | 게스트 안내 메시지 |
+| `favorites_screen.dart` | 게스트 안내 메시지 |
+| `result_screen.dart` | 즐겨찾기 시 로그인 유도 |
+| `history_provider.dart` | `reset()` → `Future<void>` + DB 삭제 |
+| `favorites_provider.dart` | `reset()` → `Future<void>` + DB 삭제 |
+| `login_prompt_dialog.dart` (신규) | 로그인 유도 다이얼로그 |
+| `marketing/proppedia/index.html` | 섹션 분리, PDF 스크린샷 추가 |
+
+---
+
