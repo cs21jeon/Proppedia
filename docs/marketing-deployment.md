@@ -120,14 +120,55 @@ scp -r build/web/* root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public
 - [ ] [Google Mobile-Friendly Test](https://search.google.com/test/mobile-friendly)
 - [ ] [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
 - [ ] [Google Rich Results Test](https://search.google.com/test/rich-results)
-- [ ] Google Search Console sitemap 제출
+- [x] Google Search Console 소유권 확인 ✅
+- [x] Google Search Console sitemap 제출 ✅
+- [x] /proppedia/ 색인 생성 요청 ✅
+- [x] 네이버 서치어드바이저 소유 확인 ✅
+- [x] 네이버 사이트맵 제출 ✅
 
 ## Google Search Console 설정
 
+### 소유권 확인 (2026-02-21 완료)
+
+**중요**: 도메인은 가비아에서 구매했지만, 네임서버가 **Cafe24**로 설정되어 있음
+- 가비아 DNS 설정이 아닌 **Cafe24 DNS 관리**에서 TXT 레코드 추가해야 함
+
+| 항목 | 값 |
+|-----|-----|
+| 타입 | TXT |
+| 호스트 | @ |
+| 값 | google-site-verification=XXXXX... |
+| TTL | 600 |
+
+### 설정 단계
+
 1. https://search.google.com/search-console 접속
-2. 속성 추가: https://goldenrabbit.biz
-3. sitemap.xml 제출
-4. URL 검사로 /proppedia/ 색인 요청
+2. 속성 추가: https://goldenrabbit.biz (도메인 방식)
+3. DNS TXT 레코드 추가 (Cafe24에서)
+4. 소유권 확인
+5. sitemap.xml 제출
+6. URL 검사로 /proppedia/ 색인 요청
+
+## 네이버 서치어드바이저 설정
+
+### 소유권 확인 (2026-02-21 완료)
+
+**방법**: 메타 태그 방식
+- 메인 사이트 index.html `<head>`에 추가:
+```html
+<meta name="naver-site-verification" content="f6c69bda05f863b019372bd73f7634bd863df399" />
+```
+
+**대시보드**: https://searchadvisor.naver.com/console/board
+
+### 사이트맵 제출 완료
+- 요청 → 사이트맵 제출 → `https://goldenrabbit.biz/sitemap.xml`
+
+### 웹페이지 수집 요청 완료
+- `https://goldenrabbit.biz`
+- `https://goldenrabbit.biz/proppedia/`
+
+---
 
 ## 문제 해결
 
