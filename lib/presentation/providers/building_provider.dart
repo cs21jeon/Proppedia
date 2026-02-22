@@ -210,6 +210,23 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
     }
   }
 
+  /// 검색 결과 직접 설정 (병렬 검색 결과 사용 시)
+  void setSearchResult(BuildingSearchResponse response, {String searchType = 'jibun'}) {
+    if (response.success) {
+      state = BuildingSearchState(
+        status: SearchStatus.success,
+        result: response,
+        searchType: searchType,
+      );
+    } else {
+      state = BuildingSearchState(
+        status: SearchStatus.error,
+        errorMessage: response.error ?? '검색 결과가 없습니다',
+        searchType: searchType,
+      );
+    }
+  }
+
   void reset() {
     state = const BuildingSearchState();
   }

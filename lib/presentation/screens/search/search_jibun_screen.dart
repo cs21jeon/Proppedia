@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
+import 'package:propedia/core/utils/jibun_address_parser.dart';
 import 'package:propedia/data/dto/building_dto.dart';
+import 'package:propedia/data/repositories/building_repository.dart';
 import 'package:propedia/presentation/providers/building_provider.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
@@ -17,222 +17,229 @@ class SearchJibunScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
-  final _bjdongController = TextEditingController();
-  final _bunController = TextEditingController();
-  final _jiController = TextEditingController();
-  final _bjdongFocusNode = FocusNode();
-  final _bunFocusNode = FocusNode();
-  final _jiFocusNode = FocusNode();
-  final LayerLink _layerLink = LayerLink();
+  final _addressController = TextEditingController();
+  final _addressFocusNode = FocusNode();
 
-  String? _selectedBjdongCode;
-  String? _selectedBjdongName;
-  String _landType = '1'; // 1=대지, 2=임야
+  // 파싱 결과
+  JibunParseResult? _parseResult;
 
+  // 법정동 검색 결과
   List<BjdongSearchItem> _bjdongResults = [];
+  BjdongSearchItem? _selectedBjdong;
+
+  // 토지 유형 검색 결과 (대지/임야 둘 다 존재하는 경우)
+  List<LandTypeSearchResult> _landTypeResults = [];
+  LandTypeSearchResult? _selectedLandType;
+
+  // 상태
+  bool _isSearchingBjdong = false;
+  bool _isSearchingLandType = false;
+  String? _errorMessage;
+
   Timer? _debounce;
-  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
     super.initState();
-    _bjdongFocusNode.addListener(_onFocusChange);
-    // Tab키로 포커스 이동 시 전체 텍스트 선택
-    _bunFocusNode.addListener(() {
-      if (_bunFocusNode.hasFocus && _bunController.text.isNotEmpty) {
-        _bunController.selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: _bunController.text.length,
-        );
-      }
-    });
-    _jiFocusNode.addListener(() {
-      if (_jiFocusNode.hasFocus && _jiController.text.isNotEmpty) {
-        _jiController.selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: _jiController.text.length,
-        );
-      }
-    });
+    _addressController.addListener(_onAddressChanged);
   }
 
   @override
   void dispose() {
-    _bjdongController.dispose();
-    _bunController.dispose();
-    _jiController.dispose();
-    _bjdongFocusNode.removeListener(_onFocusChange);
-    _bjdongFocusNode.dispose();
-    _bunFocusNode.dispose();
-    _jiFocusNode.dispose();
+    _addressController.removeListener(_onAddressChanged);
+    _addressController.dispose();
+    _addressFocusNode.dispose();
     _debounce?.cancel();
-    _removeOverlay();
     super.dispose();
   }
 
-  void _onFocusChange() {
-    if (_bjdongFocusNode.hasFocus) {
-      // 포커스를 받았을 때 기존 검색 결과가 있고 법정동이 선택되지 않았으면 드롭다운 다시 표시
-      if (_bjdongResults.isNotEmpty && _selectedBjdongCode == null) {
-        _showOverlay();
-      }
-    } else {
-      // 클릭 이벤트가 처리될 시간을 주기 위해 지연
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (mounted && !_bjdongFocusNode.hasFocus) {
-          _removeOverlay();
-        }
-      });
-    }
-  }
-
-  void _onBjdongChanged(String value) {
+  void _onAddressChanged() {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (value.trim().isNotEmpty) {
-        _searchBjdong(value);
-      } else {
+      _parseInput();
+    });
+  }
+
+  /// 입력 파싱 (검색 버튼 누르기 전 준비 단계)
+  void _parseInput() {
+    final input = _addressController.text.trim();
+
+    if (input.isEmpty) {
+      setState(() {
+        _parseResult = null;
+        _bjdongResults = [];
+        _selectedBjdong = null;
+        _landTypeResults = [];
+        _selectedLandType = null;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    // 파싱
+    final result = JibunAddressParser.parse(input);
+    setState(() {
+      _parseResult = result;
+      _errorMessage = result.error;
+      // 새로운 입력 시 이전 선택 초기화
+      _selectedBjdong = null;
+      _landTypeResults = [];
+      _selectedLandType = null;
+    });
+  }
+
+  /// 검색 버튼 클릭 시 실행
+  Future<void> _search() async {
+    // 1. 파싱 확인
+    if (_parseResult == null || !_parseResult!.isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('주소와 번지를 입력해주세요 (예: 사당동 123-45)')),
+      );
+      return;
+    }
+
+    if (!_parseResult!.hasAddressQuery) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('법정동을 함께 입력해주세요 (예: 사당동 ${_parseResult!.bun}-${_parseResult!.jiForApi})')),
+      );
+      return;
+    }
+
+    // 2. 법정동 검색
+    setState(() {
+      _isSearchingBjdong = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final repository = ref.read(buildingRepositoryProvider);
+      final bjdongResults = await repository.searchBjdong(_parseResult!.addressQuery!);
+
+      if (bjdongResults.isEmpty) {
+        setState(() {
+          _isSearchingBjdong = false;
+          _errorMessage = '해당 법정동을 찾을 수 없습니다: ${_parseResult!.addressQuery}';
+        });
+        return;
+      }
+
+      // 법정동이 1개면 바로 진행, 여러 개면 선택 요청
+      if (bjdongResults.length == 1) {
+        _selectedBjdong = bjdongResults.first;
         setState(() {
           _bjdongResults = [];
+          _isSearchingBjdong = false;
         });
-        _removeOverlay();
-      }
-    });
-  }
-
-  Future<void> _searchBjdong(String query) async {
-    try {
-      debugPrint('🔍 법정동 검색 시작: $query');
-      final repository = ref.read(buildingRepositoryProvider);
-      final results = await repository.searchBjdong(query);
-      debugPrint('✅ 법정동 검색 결과: ${results.length}건');
-      setState(() {
-        _bjdongResults = results;
-      });
-      if (results.isNotEmpty) {
-        _showOverlay();
+        await _searchLandTypes();
       } else {
-        _removeOverlay();
+        // 여러 개면 선택 UI 표시
+        setState(() {
+          _bjdongResults = bjdongResults;
+          _isSearchingBjdong = false;
+        });
       }
     } catch (e) {
-      debugPrint('❌ 법정동 검색 에러: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('검색 오류: $e')),
-        );
-      }
+      setState(() {
+        _isSearchingBjdong = false;
+        _errorMessage = '법정동 검색 중 오류가 발생했습니다';
+      });
     }
   }
 
-  void _showOverlay() {
-    _removeOverlay();
-    _overlayEntry = _createOverlayEntry();
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  OverlayEntry _createOverlayEntry() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return OverlayEntry(
-      builder: (context) => Positioned(
-        width: MediaQuery.of(context).size.width - 32,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 60),
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            color: Theme.of(context).cardColor,
-            child: Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                ),
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: _bjdongResults.length,
-                itemBuilder: (context, index) {
-                  final item = _bjdongResults[index];
-                  return InkWell(
-                    onTap: () {
-                      debugPrint('🎯 법정동 선택: ${item.fullAddress}');
-                      _selectBjdong(item);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        item.fullAddress ?? item.eupmyeondongName ?? '',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _selectBjdong(BjdongSearchItem item) {
+  /// 법정동 선택 후 토지 유형 검색
+  void _selectBjdongAndSearch(BjdongSearchItem item) async {
     setState(() {
-      _selectedBjdongCode = item.code;
-      _selectedBjdongName = item.fullAddress ?? item.eupmyeondongName;
-      _bjdongController.text = _selectedBjdongName ?? '';
+      _selectedBjdong = item;
+      _bjdongResults = []; // 드롭다운 닫기
     });
-    _removeOverlay();
-    _bjdongFocusNode.unfocus();
+    await _searchLandTypes();
   }
 
-  void _search() {
-    _removeOverlay();
-
-    if (_selectedBjdongCode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('법정동을 선택해주세요')),
-      );
+  /// 대지/임야 검색
+  ///
+  /// 검색 로직:
+  /// 1. 사당동 272-26 → 대지만 있으면 바로 결과, 임야만 있어도 바로 결과
+  /// 2. 사당동 산 272-26 → 임야만 있으면 바로 결과, 대지만 있어도 바로 결과
+  /// 3. 둘 다 있는 경우에만 선택 UI 표시
+  Future<void> _searchLandTypes() async {
+    if (_selectedBjdong == null || _parseResult == null || !_parseResult!.hasLotNumber) {
       return;
     }
 
-    final bun = _bunController.text.trim();
-    if (bun.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('본번을 입력해주세요')),
+    setState(() {
+      _isSearchingLandType = true;
+      _landTypeResults = [];
+      _selectedLandType = null;
+      _errorMessage = null;
+    });
+
+    try {
+      final repository = ref.read(buildingRepositoryProvider);
+
+      // 항상 대지/임야 양쪽 모두 검색 (산 입력 여부와 관계없이)
+      debugPrint('🔍 대지/임야 양쪽 검색: bun=${_parseResult!.bun}, ji=${_parseResult!.jiForApi}');
+      final results = await repository.searchBothLandTypes(
+        bjdongCode: _selectedBjdong!.code,
+        bun: _parseResult!.bun!,
+        ji: _parseResult!.jiForApi,
       );
-      return;
+
+      setState(() {
+        _isSearchingLandType = false;
+      });
+
+      if (results.isEmpty) {
+        setState(() {
+          _errorMessage = '해당 지번을 찾을 수 없습니다';
+        });
+      } else if (results.length == 1) {
+        // 한쪽만 존재하면 바로 결과 화면으로 (산 입력 여부와 관계없이)
+        _goToResult(results.first.response);
+      } else {
+        // 둘 다 존재하는 경우에만 선택 UI 표시
+        setState(() {
+          _landTypeResults = results;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ 토지 유형 검색 에러: $e');
+      setState(() {
+        _isSearchingLandType = false;
+        _errorMessage = '검색 중 오류가 발생했습니다';
+      });
     }
+  }
 
-    final ji = _jiController.text.trim().isEmpty ? '0000' : _jiController.text.trim();
+  /// 토지 유형 선택 후 결과 화면으로 이동
+  void _selectLandTypeAndGo(LandTypeSearchResult result) {
+    _goToResult(result.response);
+  }
 
-    ref.read(buildingSearchProvider.notifier).searchByJibun(
-          bjdongCode: _selectedBjdongCode!,
-          bun: bun,
-          ji: ji,
-          landType: _landType,
-        );
-
+  /// 결과 화면으로 이동
+  void _goToResult(BuildingSearchResponse response) {
+    ref.read(buildingSearchProvider.notifier).setSearchResult(
+      response,
+      searchType: 'jibun',
+    );
     context.push('/result');
+  }
+
+  void _clearInput() {
+    _addressController.clear();
+    setState(() {
+      _parseResult = null;
+      _bjdongResults = [];
+      _selectedBjdong = null;
+      _landTypeResults = [];
+      _selectedLandType = null;
+      _errorMessage = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = _isSearchingBjdong || _isSearchingLandType;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('지번 주소 검색'),
@@ -240,7 +247,6 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          _removeOverlay();
           FocusScope.of(context).unfocus();
         },
         child: SingleChildScrollView(
@@ -249,207 +255,39 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 안내 문구
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '법정동과 번지를 입력하여\n건축물 정보를 검색합니다',
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildInfoBox(),
 
               const SizedBox(height: 24),
 
-              // 토지구분 선택
-              Text(
-                '토지구분',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildLandTypeButton(
-                      label: '대지',
-                      value: '1',
-                      isSelected: _landType == '1',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildLandTypeButton(
-                      label: '임야',
-                      value: '2',
-                      isSelected: _landType == '2',
-                    ),
-                  ),
-                ],
-              ),
+              // 통합 입력 필드
+              _buildAddressInput(),
 
-              const SizedBox(height: 24),
-
-              // 법정동 입력
-              Text(
-                '법정동',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              CompositedTransformTarget(
-                link: _layerLink,
-                child: TextField(
-                  controller: _bjdongController,
-                  focusNode: _bjdongFocusNode,
-                  decoration: InputDecoration(
-                    hintText: '동/읍/면 이름을 입력하세요',
-                    prefixIcon: const Icon(Icons.location_city),
-                    suffixIcon: _selectedBjdongCode != null
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _bjdongController.clear();
-                                _selectedBjdongCode = null;
-                                _selectedBjdongName = null;
-                              });
-                              _removeOverlay();
-                            },
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onChanged: _onBjdongChanged,
-                ),
-              ),
-
-              if (_selectedBjdongCode != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '선택됨: $_selectedBjdongName',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green[700],
-                  ),
-                ),
+              // 법정동 선택 (다중 결과)
+              if (_bjdongResults.length > 1) ...[
+                const SizedBox(height: 16),
+                _buildBjdongSelector(),
               ],
 
-              const SizedBox(height: 24),
+              // 토지 유형 선택 (대지/임야 둘 다 존재)
+              if (_landTypeResults.length > 1) ...[
+                const SizedBox(height: 16),
+                _buildLandTypeSelector(),
+              ],
 
-              // 번지 입력
-              Text(
-                '번지',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _bunController,
-                      focusNode: _bunFocusNode,
-                      decoration: InputDecoration(
-                        hintText: '본번',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('-', style: TextStyle(fontSize: 24)),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _jiController,
-                      focusNode: _jiFocusNode,
-                      decoration: InputDecoration(
-                        hintText: '부번 (없으면 비움)',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
+              // 에러 메시지
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 16),
+                _buildErrorMessage(),
+              ],
 
               // 검색 버튼
-              ElevatedButton(
-                onPressed: _search,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('검색'),
-              ),
+              const SizedBox(height: 24),
+              _buildSearchButton(isLoading),
 
               const SizedBox(height: 24),
 
-              // 예시
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '입력 예시',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '• 서울시 동작구 사당동 123-45\n'
-                      '  → 법정동: 사당동, 본번: 123, 부번: 45\n\n'
-                      '• 서울시 강남구 역삼동 123\n'
-                      '  → 법정동: 역삼동, 본번: 123, 부번: (비움)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // 입력 예시
+              _buildExampleBox(),
             ],
           ),
         ),
@@ -458,33 +296,260 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
     );
   }
 
-  Widget _buildLandTypeButton({
-    required String label,
-    required String value,
-    required bool isSelected,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return OutlinedButton(
-      onPressed: () {
-        setState(() {
-          _landType = value;
-        });
-      },
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: isSelected
-            ? AppColors.primary
-            : (isDark ? Colors.grey[800] : Colors.white),
-        foregroundColor: isSelected
-            ? Colors.white
-            : Theme.of(context).textTheme.bodyMedium?.color,
-        side: BorderSide(
-          color: isSelected
-              ? AppColors.primary
-              : (isDark ? Colors.grey[600]! : Colors.grey[300]!),
-        ),
+  Widget _buildInfoBox() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '법정동과 번지를 함께 입력하세요\n예: 사당동 123-45',
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '지번 주소',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _addressController,
+          focusNode: _addressFocusNode,
+          decoration: InputDecoration(
+            hintText: '예: 사당동 123-45, 사당동 산 123',
+            prefixIcon: const Icon(Icons.location_on),
+            suffixIcon: _addressController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: _clearInput,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          textInputAction: TextInputAction.search,
+          onSubmitted: (_) => _search(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBjdongSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber, size: 18, color: Colors.orange),
+              const SizedBox(width: 8),
+              Text(
+                '동일 이름 ${_bjdongResults.length}건 - 선택해주세요',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ..._bjdongResults.map((item) => InkWell(
+                onTap: () => _selectBjdongAndSearch(item),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_city, size: 18, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.fullAddress ?? item.eupmyeondongName ?? '',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info, size: 18, color: Colors.blue),
+              const SizedBox(width: 8),
+              const Text(
+                '토지 유형을 선택해주세요',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '해당 번지가 대지와 임야 모두에 존재합니다',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._landTypeResults.map((result) => InkWell(
+                onTap: () => _selectLandTypeAndGo(result),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        result.landType == '2' ? Icons.forest : Icons.landscape,
+                        size: 18,
+                        color: result.landType == '2' ? Colors.green : Colors.brown,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          result.landTypeName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchButton(bool isLoading) {
+    return ElevatedButton(
+      onPressed: isLoading ? null : _search,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      child: isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text('검색'),
+    );
+  }
+
+  Widget _buildExampleBox() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '입력 예시',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '• 사당동 123-45\n'
+            '• 동작구 사당동 123-45\n'
+            '• 서울시 강남구 역삼동 123-45\n'
+            '• 사당동 산 123-45 (임야)',
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

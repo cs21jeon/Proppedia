@@ -58,6 +58,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   void _saveSearchHistory() {
     if (_historySaved) return;
 
+    // 로그인 상태 확인 - 비로그인 시 기록 저장 안 함
+    final authState = ref.read(authProvider);
+    if (authState.status != AuthStatus.authenticated) return;
+
     final searchState = ref.read(buildingSearchProvider);
     if (searchState.status != SearchStatus.success || searchState.result == null) return;
 
@@ -224,6 +228,17 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   /// 즐겨찾기 토글
   Future<void> _toggleFavorite(BuildingSearchResponse result, bool isFavorite) async {
+    // 로그인 상태 확인 - 비로그인 시 로그인 유도 다이얼로그 표시
+    final authState = ref.read(authProvider);
+    if (authState.status != AuthStatus.authenticated) {
+      LoginPromptDialog.show(
+        context,
+        title: '즐겨찾기',
+        message: '로그인하면 즐겨찾기를 등록하고 모든 기기에서 동기화할 수 있습니다.',
+      );
+      return;
+    }
+
     final displayAddress = _getDisplayAddress(result);
     if (displayAddress.isEmpty) return;
 
@@ -261,17 +276,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         buildingType: building?.type,
       );
 
-      if (!mounted) return;
-
-      // 게스트 모드면 로그인 유도 다이얼로그 표시
-      final authState = ref.read(authProvider);
-      if (authState.status == AuthStatus.guest) {
-        await LoginPromptDialog.show(
-          context,
-          title: '즐겨찾기 저장됨',
-          message: '로그인하면 모든 기기에서 즐겨찾기를 동기화할 수 있습니다.',
-        );
-      } else {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('즐겨찾기에 등록되었습니다'),
@@ -284,6 +289,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   /// PDF 옵션 Bottom Sheet
   void _showPdfOptions(BuildContext context, BuildingSearchResponse data) {
+    // 로그인 상태 확인
+    final authState = ref.read(authProvider);
+    if (authState.status != AuthStatus.authenticated) {
+      // 비로그인 시 로그인 유도 다이얼로그 표시
+      LoginPromptDialog.show(
+        context,
+        title: 'PDF 저장',
+        message: '로그인하면 건축물대장 정보를 PDF로 저장하고 공유할 수 있습니다.',
+      );
+      return;
+    }
+
     final areaInfoState = ref.read(areaInfoProvider);
     final areaInfo = areaInfoState.status == SearchStatus.success ? areaInfoState.areaInfo : null;
 
@@ -1276,9 +1293,27 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       platPlc = buildingInfo?.platPlc;
     }
 
-    // 지번 주소가 없으면 fullAddress 사용
+    // 지번 주소가 없으면 fullAddress + PNU에서 추출한 번지 사용
     if (platPlc == null || platPlc == '-' || platPlc.trim().isEmpty) {
       platPlc = address?.fullAddress;
+
+      // PNU에서 번지 추출하여 추가 (건물 없는 토지의 경우 필요)
+      if (platPlc != null && codes?.pnu != null && codes!.pnu!.length >= 19) {
+        final pnu = codes.pnu!;
+        // PNU 구조: bjdong(10) + land_type(1) + bun(4) + ji(4)
+        final landType = pnu.substring(10, 11);
+        final bunStr = pnu.substring(11, 15);
+        final jiStr = pnu.substring(15, 19);
+
+        final bun = int.tryParse(bunStr) ?? 0;
+        final ji = int.tryParse(jiStr) ?? 0;
+
+        if (bun > 0) {
+          final lotNumber = ji > 0 ? '$bun-$ji' : '$bun';
+          final prefix = landType == '2' ? '산 ' : '';
+          platPlc = '$platPlc $prefix$lotNumber';
+        }
+      }
     }
 
     // 주소가 없으면 지도 표시 안 함
@@ -1291,7 +1326,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       platPlc = '${address.sidoName!} $platPlc';
     }
 
-    // 번지 제거
+    // 번지 제거 (뒤에 "번지" 글자만 제거)
     platPlc = platPlc.replaceAll(RegExp(r'번지$'), '').trim();
 
     return Card(
