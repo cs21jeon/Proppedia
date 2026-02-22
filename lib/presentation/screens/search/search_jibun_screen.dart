@@ -351,7 +351,44 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
           textInputAction: TextInputAction.search,
           onSubmitted: (_) => _search(),
         ),
+
+        // 파싱 미리보기 (유효한 입력일 때만)
+        if (_parseResult != null && _parseResult!.isValid) ...[
+          const SizedBox(height: 12),
+          _buildParsePreview(),
+        ],
       ],
+    );
+  }
+
+  Widget _buildParsePreview() {
+    final result = _parseResult!;
+    final bunjiText = result.isMountain
+        ? '산 ${result.bun}${result.ji != '0' ? '-${result.ji}' : ''}'
+        : '${result.bun}${result.ji != '0' ? '-${result.ji}' : ''}';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${result.hasAddressQuery ? '법정동: ${result.addressQuery} / ' : ''}번지: $bunjiText',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.green[700],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

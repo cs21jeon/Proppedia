@@ -37,13 +37,22 @@ class JibunAddressParser {
       isMountain = true;
       working = working.replaceFirst(' 산', ' ');
     }
-    // "사당동산123-45" 형태 (공백 없이 동/리/읍/면 바로 뒤에 산)
+    // "사당동산123-45" 형태 (공백 없이 동/리/읍/면 바로 뒤에 산+숫자)
     else if (RegExp(r'[동리읍면]산\d').hasMatch(working)) {
       isMountain = true;
       // 동/리/읍/면 뒤의 "산"을 공백으로 대체
       working = working.replaceFirstMapped(
         RegExp(r'([동리읍면])산(\d)'),
         (match) => '${match.group(1)} ${match.group(2)}',
+      );
+    }
+    // "사당동산 32-77" 형태 (동/리/읍/면+산+공백+숫자)
+    else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
+      isMountain = true;
+      // 동/리/읍/면 뒤의 "산 "을 공백으로 대체
+      working = working.replaceFirstMapped(
+        RegExp(r'([동리읍면])산\s+'),
+        (match) => '${match.group(1)} ',
       );
     }
 

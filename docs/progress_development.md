@@ -1994,3 +1994,127 @@ flutter_launcher_icons:
 
 ---
 
+### 2026-02-22: 로그인 필수 기능 강화 및 지번 검색 UX 개선
+
+#### 1. 비로그인 시 기능 제한 강화
+
+**기능 정책 업데이트**:
+| 기능 | 비로그인 | 로그인 |
+|---|:---:|:---:|
+| 주소 검색 | O | O |
+| 건축물/토지 정보 조회 | O | O |
+| PDF 미리보기/저장/공유 | X | O |
+| 검색기록 | X | O |
+| 즐겨찾기 | X | O |
+| 서버 동기화 | X | O |
+
+**수정된 파일 (Flutter)**:
+- `lib/presentation/screens/search/result_screen.dart`
+  - `_toggleFavorite()`: 비로그인 시 로그인 유도 다이얼로그 표시 후 return
+  - `_saveSearchHistory()`: 비로그인 시 저장 스킵
+
+**수정된 파일 (PWA 웹앱)**:
+- `/home/webapp/goldenrabbit/frontend/public/app/result.html`
+  - `saveSearchHistory()` 호출 전 로그인 체크 추가
+
+#### 2. 지번 검색 UX 개선 (통합 입력)
+
+**문제**: 기존 3단계 입력 필요 (법정동 선택 → 본번 입력 → 부번 입력)
+
+**해결**: 단일 필드에 "사당동 272-26" 형식으로 한 번에 입력
+
+**지원 형식**:
+- "사당동 272-26"
+- "동작구 사당동 272"
+- "서울시 동작구 사당동 272-26"
+- "산 123-45" (임야 자동 감지)
+
+**구현 파일**:
+- `lib/core/utils/jibun_address_parser.dart` (신규)
+  - 주소 문자열 파싱하여 법정동 쿼리, 본번, 부번, 임야 여부 분리
+- `lib/presentation/screens/search/search_jibun_screen.dart`
+  - 통합 입력 필드 UI
+  - 법정동 자동완성 + 단일 매칭 시 자동 선택
+  - 산/대지 병렬 검색 후 선택 UI
+- `lib/data/repositories/building_repository.dart`
+  - `searchBothLandTypes()` 메서드 추가 (대지/임야 병렬 검색)
+- `lib/presentation/providers/building_provider.dart`
+  - `LandTypeSearchResult` 클래스 추가
+
+**검색 플로우**:
+```
+입력: "사당동 272-26"
+    ↓
+파싱: addressQuery="사당동", bun="272", ji="26", isMountain=false
+    ↓
+법정동 검색 → 단일 매칭 시 자동 선택
+    ↓
+대지/임야 병렬 검색 (searchBothLandTypes)
+    ↓
+양쪽 존재 시 → 선택 UI / 단일 존재 시 → 바로 결과
+```
+
+#### 3. 지도 위치 정확도 개선
+
+**문제**: 건물 없는 토지 검색 시 지도가 엉뚱한 위치 표시
+
+**원인**: geocoding에 번지 정보 없이 "서울특별시 동작구 사당동"만 전달
+
+**해결**: PNU 코드에서 번지 추출하여 주소에 추가
+
+```dart
+// PNU 구조: bjdong(10) + land_type(1) + bun(4) + ji(4)
+final landType = pnu.substring(10, 11);
+final bunStr = pnu.substring(11, 15);
+final jiStr = pnu.substring(15, 19);
+// → "서울특별시 동작구 사당동 산 32-77" 형식으로 geocoding
+```
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `result_screen.dart` | 로그인 필수 체크 (즐겨찾기, 검색기록), 지도 위치 PNU 추출 |
+| `jibun_address_parser.dart` (신규) | 지번 주소 파싱 유틸리티 |
+| `search_jibun_screen.dart` | 통합 입력 UI, 산/대지 선택 UI |
+| `building_repository.dart` | `searchBothLandTypes()` 병렬 검색 |
+| `building_provider.dart` | 검색 상태 관리 업데이트 |
+| PWA `result.html` | 비로그인 시 검색기록 저장 차단 |
+| PWA `search-jibun.html` | 통합 입력 UI, 산/대지 병렬 검색 |
+
+#### 3. 지번 검색 버튼 클릭 방식으로 변경
+
+**문제**: 입력 시 자동 검색으로 인해 뒤로가기 후 검색 버튼이 안 보이는 UX 문제
+
+**해결**: 버튼 클릭 방식으로 변경
+- 입력 시 → 파싱 미리보기만 표시 (API 호출 없음)
+- 검색 버튼 → 항상 표시
+- 버튼 클릭 시 → API 검색 시작
+
+**수정된 파일**:
+- `lib/presentation/screens/search/search_jibun_screen.dart` - 버튼 클릭 방식 적용
+- PWA `/app/search-jibun.html` - 버튼 클릭 방식 적용
+
+#### 4. "산" 파싱 버그 수정
+
+**문제**: "사당동산 32-77" 형태 (동+산+공백+숫자) 파싱 실패
+
+**해결**: 새로운 정규식 패턴 추가
+
+```dart
+// "사당동산 32-77" 형태 (동/리/읍/면+산+공백+숫자)
+else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
+  isMountain = true;
+  working = working.replaceFirstMapped(
+    RegExp(r'([동리읍면])산\s+'),
+    (match) => '${match.group(1)} ',
+  );
+}
+```
+
+**수정된 파일**:
+- `lib/core/utils/jibun_address_parser.dart` - 파싱 패턴 추가
+- PWA `/app/search-jibun.html` - 동일 패턴 추가
+
+---
+

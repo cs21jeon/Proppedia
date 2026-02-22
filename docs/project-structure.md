@@ -21,6 +21,7 @@ lib/
 │   ├── storage/
 │   │   └── token_storage.dart         # 토큰 보안 저장소
 │   └── utils/
+│       └── jibun_address_parser.dart  # 지번 주소 파싱 유틸리티
 │
 ├── data/                              # 데이터 레이어
 │   ├── datasources/
@@ -259,4 +260,4 @@ lib/
 
 ---
 
-*마지막 업데이트: 2026-02-18*
+*마지막 업데이트: 2026-02-22*
