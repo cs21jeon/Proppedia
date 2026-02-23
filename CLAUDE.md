@@ -92,3 +92,39 @@ Run `dart run build_runner build --delete-conflicting-outputs` to regenerate `.g
 - Typography defined in `lib/core/constants/app_text_styles.dart`
 - Complete light/dark themes in `lib/shared/theme/app_theme.dart`
 - Uses Material 3 design system
+
+## Release Workflow
+
+업데이트/릴리즈 시 다음 단계를 따릅니다:
+
+### 슬래시 명령어
+- `/release` - 전체 릴리즈 워크플로우 (테스트 → 빌드 → 커밋)
+- `/test` - 코드 분석 및 테스트 실행
+- `/build` - APK/AAB 빌드
+- `/deploy` - 서버 배포
+
+### 릴리즈 프로세스
+1. 코드 수정 완료
+2. `/test` 실행하여 오류 확인
+3. 오류 있으면 수정 후 재테스트
+4. `docs/CHANGELOG.md` 업데이트
+5. `pubspec.yaml` 버전 업데이트
+6. `/build` 실행하여 APK/AAB 생성
+7. 커밋 및 푸시
+8. (필요시) `/deploy`로 서버 배포
+
+### 버전 관리
+- 버전 형식: `X.Y.Z+N` (Major.Minor.Patch+BuildNumber)
+- 빌드 번호는 Play Store 업로드마다 증가
+- 변경 이력: `docs/CHANGELOG.md`
+
+### 빌드 파일 위치
+- APK: `build/app/outputs/flutter-apk/app-release.apk`
+- AAB: `build/app/outputs/bundle/release/app-release.aab`
+
+## Server Information
+
+- **Host**: `root@175.119.224.71`
+- **Web App**: `/home/webapp/goldenrabbit`
+- **MCP Config**: `.mcp.json`
+- **API Base**: `https://goldenrabbit.biz/app/api/`

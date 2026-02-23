@@ -18,8 +18,9 @@
 | 4 | 사당동 314-12 동없음 201호 | 공동주택 | 세대/가구/호, 공시가격 년도 |
 | 5 | 사당동 280-1 101동 201호 | 다필지 공동주택 | 필지수 표시 (9필지) |
 | 6 | 사당동 1154 101동 201호 | 대규모 아파트 | 해당동 정보, 전유부 정보 |
-| 7 | 사당동 147-29 이수자이동 101-1402호 | 복잡한 동/호명 | 특수 동명/호명 처리 |
-| 8 | 사당동 86-6 동없음 101호 | 비주거 건물 | 주택 아닌 multi_unit 처리 |
+| 7 | 사당동 105 101동 101호 | 초대규모 아파트 (4,613세대) | VWorld 대지지분, 부속지번, 39개동 |
+| 8 | 사당동 147-29 이수자이동 101-1402호 | 복잡한 동/호명 | 특수 동명/호명 처리 |
+| 9 | 사당동 86-6 동없음 101호 | 비주거 건물 | 주택 아닌 multi_unit 처리 |
 
 ---
 
@@ -290,14 +291,27 @@ curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
   -d '{"bjdong_code":"1159010700","bun":"1154","ji":"0","land_type":"1"}'
 ```
 
-### Case 7: 복잡한 동/호명
+### Case 7: 초대규모 아파트 (극동아파트 4,613세대)
+```bash
+# 건물 조회
+curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
+  -H "Content-Type: application/json" \
+  -d '{"bjdong_code":"1159010700","bun":"105","ji":"0","land_type":"1"}'
+
+# 전유부 조회 (대지지분 VWorld API 조회)
+curl -s -X POST "https://goldenrabbit.biz/app/api/area" \
+  -H "Content-Type: application/json" \
+  -d '{"bjdong_code":"1159010700","bun":"105","ji":"0","dong_nm":"101동","ho_nm":"101호"}'
+```
+
+### Case 8: 복잡한 동/호명
 ```bash
 curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
   -H "Content-Type: application/json" \
   -d '{"bjdong_code":"1159010700","bun":"147","ji":"29","land_type":"1"}'
 ```
 
-### Case 8: 비주거 건물
+### Case 9: 비주거 건물
 ```bash
 curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
   -H "Content-Type: application/json" \

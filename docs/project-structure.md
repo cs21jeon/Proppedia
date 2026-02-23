@@ -8,17 +8,25 @@ lib/
 ├── app.dart                           # MaterialApp 설정
 │
 ├── core/                              # 프레임워크 레벨 유틸리티
+│   ├── ads/
+│   │   └── ad_service.dart            # AdMob 광고 서비스
 │   ├── constants/
 │   │   ├── app_colors.dart            # 색상 상수
-│   │   └── app_text_styles.dart       # 텍스트 스타일 상수
+│   │   ├── app_text_styles.dart       # 텍스트 스타일 상수
+│   │   └── terms.dart                 # 이용약관/개인정보처리방침
 │   ├── database/
 │   │   └── database_service.dart      # Hive 로컬 DB 서비스
 │   ├── network/
 │   │   ├── api_client.dart            # Dio HTTP 클라이언트
 │   │   └── auth_interceptor.dart      # JWT 토큰 인터셉터
+│   ├── pdf/
+│   │   ├── pdf_fonts.dart             # PDF 폰트 로더
+│   │   ├── pdf_generator.dart         # PDF 문서 생성
+│   │   └── pdf_styles.dart            # PDF 스타일 정의
 │   ├── router/
 │   │   └── app_router.dart            # go_router 라우팅 설정
 │   ├── storage/
+│   │   ├── login_preferences.dart     # 로그인 설정 저장소
 │   │   └── token_storage.dart         # 토큰 보안 저장소
 │   └── utils/
 │       └── jibun_address_parser.dart  # 지번 주소 파싱 유틸리티
@@ -28,40 +36,45 @@ lib/
 │   │   └── remote/
 │   │       ├── auth_api.dart          # 인증 API
 │   │       ├── building_api.dart      # 건축물 검색 API
-│   │       ├── map_api.dart           # 지도 API
-│   │       ├── history_api.dart       # 검색기록 API
 │   │       ├── favorites_api.dart     # 즐겨찾기 API
-│   │       ├── user_api.dart          # 사용자 API
-│   │       └── property_api.dart      # 매물 API ★
+│   │       ├── history_api.dart       # 검색기록 API
+│   │       ├── map_api.dart           # 지도 API
+│   │       ├── naver_map_api.dart     # 네이버 지도 API
+│   │       ├── property_api.dart      # 매물 API ★
+│   │       └── user_api.dart          # 사용자 API
 │   ├── dto/
 │   │   ├── auth_dto.dart              # 인증 DTO
 │   │   ├── building_dto.dart          # 건축물 DTO
 │   │   ├── map_dto.dart               # 지도 DTO
-│   │   ├── user_stats_dto.dart        # 사용 통계 DTO
-│   │   └── property_dto.dart          # 매물 DTO ★
+│   │   ├── property_dto.dart          # 매물 DTO ★
+│   │   └── user_stats_dto.dart        # 사용 통계 DTO
 │   ├── models/
-│   │   ├── search_history.dart        # 검색기록 Hive 모델
-│   │   └── favorite.dart              # 즐겨찾기 Hive 모델
+│   │   ├── favorite.dart              # 즐겨찾기 Hive 모델
+│   │   └── search_history.dart        # 검색기록 Hive 모델
 │   └── repositories/
 │       ├── auth_repository.dart       # 인증 Repository
 │       ├── building_repository.dart   # 건축물 Repository
-│       ├── map_repository.dart        # 지도 Repository
-│       ├── history_repository.dart    # 검색기록 Repository
 │       ├── favorites_repository.dart  # 즐겨찾기 Repository
-│       ├── user_repository.dart       # 사용자 Repository
-│       └── property_repository.dart   # 매물 Repository ★
+│       ├── history_repository.dart    # 검색기록 Repository
+│       ├── map_repository.dart        # 지도 Repository
+│       ├── property_repository.dart   # 매물 Repository ★
+│       └── user_repository.dart       # 사용자 Repository
+│
+├── domain/                            # 도메인 레이어
+│   └── entities/
+│       └── user.dart                  # 사용자 엔티티
 │
 ├── presentation/                      # UI 레이어
 │   ├── providers/
 │   │   ├── auth_provider.dart         # 인증 상태 관리
 │   │   ├── building_provider.dart     # 건축물 검색 상태
-│   │   ├── map_provider.dart          # 지도 상태
-│   │   ├── history_provider.dart      # 검색기록 상태
 │   │   ├── favorites_provider.dart    # 즐겨찾기 상태
-│   │   ├── theme_provider.dart        # 다크모드 상태
-│   │   ├── user_provider.dart         # 사용자 통계 상태
+│   │   ├── history_provider.dart      # 검색기록 상태
+│   │   ├── map_provider.dart          # 지도 상태
 │   │   ├── pdf_provider.dart          # PDF 생성 상태
-│   │   └── property_provider.dart     # 매물 상태 관리 ★
+│   │   ├── property_provider.dart     # 매물 상태 관리 ★
+│   │   ├── theme_provider.dart        # 다크모드 상태
+│   │   └── user_provider.dart         # 사용자 통계 상태
 │   │
 │   ├── screens/
 │   │   ├── splash/
@@ -72,10 +85,10 @@ lib/
 │   │   ├── home/
 │   │   │   └── home_screen.dart       # Proppedia 홈 화면
 │   │   ├── search/
-│   │   │   ├── search_road_screen.dart   # 도로명 검색
+│   │   │   ├── result_screen.dart        # 검색 결과
 │   │   │   ├── search_jibun_screen.dart  # 지번 검색
 │   │   │   ├── search_map_screen.dart    # 지도 검색
-│   │   │   └── result_screen.dart        # 검색 결과
+│   │   │   └── search_road_screen.dart   # 도로명 검색
 │   │   ├── history/
 │   │   │   └── history_screen.dart    # 검색기록 화면
 │   │   ├── favorites/
@@ -84,16 +97,20 @@ lib/
 │   │   │   └── profile_screen.dart    # 프로필/설정 화면
 │   │   │
 │   │   └── property/                  # ★ 금토끼부동산 매물 ★
-│   │       ├── property_home_screen.dart   # 매물 홈 화면
-│   │       ├── property_list_screen.dart   # 매물 목록 (카테고리 탭)
-│   │       ├── property_detail_screen.dart # 매물 상세
-│   │       ├── property_map_screen.dart    # 매물 지도
-│   │       └── property_search_screen.dart # 매물 검색
+│   │       ├── property_detail_screen.dart    # 매물 상세
+│   │       ├── property_home_screen.dart      # 매물 홈 화면
+│   │       ├── property_list_screen.dart      # 매물 목록 (카테고리 탭)
+│   │       ├── property_map_screen.dart       # 매물 지도
+│   │       ├── property_search_map_screen.dart # 매물 지도 검색
+│   │       └── property_search_screen.dart    # 매물 조건 검색
 │   │
 │   └── widgets/
+│       ├── ads/
+│       │   └── banner_ad_widget.dart  # 배너 광고 위젯
 │       ├── common/
+│       │   ├── app_drawer.dart        # 앱 드로어 (햄버거 메뉴)
 │       │   ├── app_footer.dart        # 앱 푸터 위젯
-│       │   └── app_drawer.dart        # 앱 드로어 (햄버거 메뉴)
+│       │   └── login_prompt_dialog.dart # 로그인 유도 다이얼로그
 │       │
 │       └── property/                  # ★ 매물 관련 위젯 ★
 │           ├── property_card.dart     # 매물 카드
@@ -260,4 +277,4 @@ lib/
 
 ---
 
-*마지막 업데이트: 2026-02-22*
+*마지막 업데이트: 2026-02-23*

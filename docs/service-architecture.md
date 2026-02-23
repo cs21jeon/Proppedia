@@ -1,7 +1,7 @@
 # GoldenRabbit 서비스 아키텍처 정리
 
 > 작성일: 2026-02-11
-> 최종 업데이트: 2026-02-11
+> 최종 업데이트: 2026-02-23
 
 ## 개요
 
@@ -53,10 +53,11 @@ frontend/public/
 ```
 backend/api/
 ├── app.py                        # Flask API 서버 메인
-├── threads_auth.py               # Threads 인증
-├── instagram_auth.py             # Instagram 인증
 └── utils/
-    └── backup_loader.py          # 백업 데이터 로더
+    ├── backup_loader.py          # 백업 데이터 로더
+    ├── instagram_auth.py         # Instagram 인증
+    ├── threads_auth.py           # Threads 인증
+    └── token_manager.py          # 토큰 관리
 ```
 
 #### 주요 API 엔드포인트
@@ -96,22 +97,40 @@ config/nginx/goldenrabbit.conf    # Nginx 메인 설정 파일
 backend/property-manager/
 ├── app.py                        # Flask 앱 메인 (Property Manager + PropSheet)
 ├── routes/
+│   ├── address_finder.py         # 주소 찾기
+│   ├── airtable.py               # Airtable 저장
+│   ├── app_api.py                # 앱 API (건물 검색, PDF 생성)
+│   ├── app_auth.py               # 앱 사용자 인증
+│   ├── app_user_data.py          # 사용자 데이터 (즐겨찾기, 히스토리)
 │   ├── auth.py                   # 로그인 인증 (@login_required)
+│   ├── blog.py                   # 블로그 관리
+│   ├── database.py               # 데이터베이스 관리
+│   ├── geocoding.py              # 지오코딩
+│   ├── instagram.py              # Instagram 연동
 │   ├── property.py               # 건축물 정보 조회
+│   ├── propsheet.py              # PropSheet 라우트
 │   ├── search.py                 # 건물 검색
 │   ├── search_map.py             # 지도 검색
-│   ├── airtable.py               # Airtable 저장
-│   ├── blog.py                   # 블로그 관리
-│   ├── instagram.py              # Instagram 연동
-│   ├── address_finder.py         # 주소 찾기
-│   ├── geocoding.py              # 지오코딩
-│   ├── database.py               # 데이터베이스 관리
 │   └── workspace.py              # 워크스페이스 관리
 ├── services/
+│   ├── address_finder_service.py    # 주소 검색 서비스
+│   ├── airtable_service.py          # Airtable CRUD
+│   ├── app_favorite_service.py      # 앱 즐겨찾기 서비스
+│   ├── app_history_service.py       # 앱 검색기록 서비스
+│   ├── app_usage_stats_service.py   # 앱 사용 통계 서비스
+│   ├── app_user_service.py          # 앱 사용자 서비스
+│   ├── bjdong_service.py            # 법정동 코드 변환
+│   ├── blog_service.py              # 블로그 서비스
 │   ├── building_unified_service.py  # 통합 건축물 조회 (일반/다세대 자동 라우팅)
-│   ├── vworld_service.py         # VWorld API (토지 정보, 대지지분)
-│   ├── bjdong_service.py         # 법정동 코드 변환
-│   └── airtable_service.py       # Airtable CRUD
+│   ├── cadastral_service.py         # 지적도 서비스
+│   ├── database_service.py          # 데이터베이스 서비스
+│   ├── instagram_service.py         # Instagram 서비스
+│   ├── pdf_service.py               # PDF 생성 서비스
+│   ├── pdf_service_v2.py            # PDF 생성 서비스 v2
+│   ├── record_id_service.py         # 레코드 ID 서비스
+│   ├── schema_service.py            # 스키마 서비스
+│   ├── vworld_service.py            # VWorld API (토지 정보, 대지지분)
+│   └── workspace_service.py         # 워크스페이스 서비스
 ├── templates/
 │   ├── index.html                # Property Manager 메인
 │   ├── public.html               # 공개 조회 페이지 (로그인 불필요)
@@ -182,10 +201,17 @@ frontend/public/app/
 
 #### 백엔드 API (Port 5000)
 ```
-backend/property-manager/routes/
-├── app_api.py                    # 앱 API (건물 검색, PDF 생성)
-├── app_auth.py                   # 앱 사용자 인증
-└── app_user_data.py              # 사용자 데이터 (즐겨찾기, 히스토리)
+backend/property-manager/
+├── routes/
+│   ├── app_api.py                # 앱 API (건물 검색, PDF 생성)
+│   ├── app_auth.py               # 앱 사용자 인증
+│   └── app_user_data.py          # 사용자 데이터 (즐겨찾기, 히스토리)
+└── services/
+    ├── app_favorite_service.py   # 즐겨찾기 서비스
+    ├── app_history_service.py    # 검색기록 서비스
+    ├── app_usage_stats_service.py # 사용 통계 서비스
+    ├── app_user_service.py       # 사용자 서비스
+    └── pdf_service_v2.py         # PDF 생성 서비스
 ```
 
 #### 주요 API 엔드포인트
@@ -228,8 +254,12 @@ location /app/api/ {
 backend/property-manager/
 ├── app.py                        # Flask 앱 (MultiPrefixMiddleware)
 ├── routes/
-│   └── propsheet.py              # PropSheet 라우트
+│   ├── propsheet.py              # PropSheet 라우트
+│   ├── database.py               # 데이터베이스 관리
+│   └── workspace.py              # 워크스페이스 관리
 ├── services/
+│   ├── database_service.py       # 데이터베이스 서비스
+│   ├── schema_service.py         # 스키마 서비스
 │   └── workspace_service.py      # 워크스페이스/데이터베이스 관리
 └── templates/propsheet/
     ├── workspaces.html           # 워크스페이스 목록
@@ -411,6 +441,25 @@ journalctl -u goldenrabbit-property -f
 - **스크립트**: `backend/scripts/generate_map.py`
 - **출력**: `frontend/public/airtable_map.html`
 - **로그**: `/var/log/airtable_map.log`
+
+### 스크립트 목록
+```
+backend/scripts/
+├── airtable_backup.py            # Airtable 백업
+├── fetch_recomm_images.py        # 추천 이미지 가져오기
+├── generate_map.py               # 지도 HTML 생성
+├── instagram_auth.py             # Instagram 인증
+├── instagram_token_exchange.py   # Instagram 토큰 교환
+├── instagram_token_manager.py    # Instagram 토큰 관리
+├── quick_token_setup.py          # 빠른 토큰 설정
+├── save_blog_thumbnails.py       # 블로그 썸네일 저장
+├── setup_threads_token_from_code.py # Threads 토큰 설정
+├── test_instagram_token.py       # Instagram 토큰 테스트
+├── threads_auth.py               # Threads 인증
+├── threads_oauth_helper.py       # Threads OAuth 헬퍼
+├── token_manager.py              # 토큰 관리
+└── update_bjdong_codes.py        # 법정동 코드 업데이트
+```
 
 ---
 
