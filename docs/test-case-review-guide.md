@@ -21,6 +21,7 @@
 | 7 | 사당동 105 101동 101호 | 초대규모 아파트 (4,613세대) | VWorld 대지지분, 부속지번, 39개동 |
 | 8 | 사당동 147-29 이수자이동 101-1402호 | 복잡한 동/호명 | 특수 동명/호명 처리 |
 | 9 | 사당동 86-6 동없음 101호 | 비주거 건물 | 주택 아닌 multi_unit 처리 |
+| 10 | 화성시동탄구 영천동 892 | 신규 행정구역 | 구 코드 매핑, 도로명 검색 일치 |
 
 ---
 
@@ -317,3 +318,22 @@ curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
   -H "Content-Type: application/json" \
   -d '{"bjdong_code":"1159010700","bun":"86","ji":"6","land_type":"1"}'
 ```
+
+### Case 10: 신규 행정구역 (화성시동탄구 영천동 892)
+```bash
+# 지번 검색 (신 코드 → 구 코드 자동 매핑)
+curl -s -X POST "https://goldenrabbit.biz/app/api/search/jibun" \
+  -H "Content-Type: application/json" \
+  -d '{"bjdong_code":"4159710600","bun":"892","ji":"0","land_type":"1"}'
+
+# 도로명 검색 (동일 건물 확인)
+curl -s -X POST "https://goldenrabbit.biz/app/api/search/road" \
+  -H "Content-Type: application/json" \
+  -d '{"road_name":"동탄대로24길 117"}'
+```
+
+**검증 포인트:**
+- 지번 검색: 건물명 "동탄파크자이", `has_data: true`
+- 도로명 검색: 동일 건물 조회됨
+- `codes.old_bjdong_code`: 4159013100 (구 화성시 영천동)
+- `codes.api_pnu`: 구 코드 기반 PNU
