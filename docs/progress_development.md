@@ -2118,3 +2118,76 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 
 ---
 
+### 2026-02-26: 스켈레톤 로딩 UI 및 단계별 진행 메시지 (v1.0.2+6)
+
+#### 1. 스켈레톤 로딩 UI 구현
+
+**목표**: 로딩 중 실제 결과 화면과 유사한 스켈레톤 UI로 체감 속도 개선
+
+**생성된 파일**:
+- `lib/presentation/widgets/common/skeleton_loading.dart` - Shimmer 기반 스켈레톤 UI
+- `lib/presentation/widgets/common/loading_progress_indicator.dart` - 시간 기반 로딩 위젯
+
+**수정된 파일**:
+- `lib/presentation/screens/search/result_screen.dart` - 로딩/에러 UI 교체
+- `lib/core/network/api_client.dart` - 타임아웃 30초 → 60초
+
+**스켈레톤 UI 구성**:
+- 기본 정보 카드 (파란색 아이콘)
+- 토지 정보 카드 (초록색 아이콘)
+- 건물 정보 카드 (주황색 아이콘)
+- 지도 섹션 (청록색 아이콘)
+
+#### 2. 시간 기반 단계별 진행 메시지
+
+서버 호출 없이 클라이언트 타이머만 사용 (추가 지연 없음)
+
+**메시지 타이밍**:
+| 경과 시간 | 메시지 |
+|----------|--------|
+| 0~3초 | 건축물 정보 조회 중... |
+| 3~8초 | 토지 정보 확인 중... |
+| 8~15초 | 전유부 정보 조회 중... |
+| 15~25초 | 대지지분 계산 중... |
+| 25~40초 | 데이터 정리 중... |
+| 40초+ | 거의 완료되었습니다... |
+
+#### 3. 에러 화면 개선
+
+**변경 전**: 에러 메시지만 표시
+**변경 후**:
+- 큰 에러 아이콘 (64px)
+- 에러 메시지 표시
+- "다시 시도" 버튼 (새로고침)
+- 네트워크 오류 안내 문구
+
+#### 4. API 타임아웃 연장
+
+**변경**: 30초 → 60초
+**이유**: 대규모 아파트 (2만 세대+) 조회 시 타임아웃 방지
+
+#### 5. PWA 앱 동일 적용
+
+**수정 파일**: `/home/webapp/goldenrabbit/frontend/public/app/result.html`
+
+- CSS animate-pulse 기반 스켈레톤 UI
+- JavaScript 타이머로 단계별 메시지
+- 에러 화면에 "다시 시도" / "돌아가기" 버튼
+
+#### 빌드 결과
+
+- APK: `build/app/outputs/flutter-apk/app-release.apk` (76.6MB)
+- AAB: `build/app/outputs/bundle/release/app-release.aab` (61.2MB)
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `api_client.dart` | 타임아웃 60초 |
+| `skeleton_loading.dart` (신규) | Shimmer 스켈레톤 UI |
+| `loading_progress_indicator.dart` (신규) | 시간 기반 메시지 |
+| `result_screen.dart` | LoadingProgressIndicator 사용, 에러 UI 개선 |
+| PWA `result.html` | 스켈레톤 UI, 단계별 메시지, 에러 UI |
+
+---
+

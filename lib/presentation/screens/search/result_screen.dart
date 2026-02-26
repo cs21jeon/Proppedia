@@ -12,6 +12,7 @@ import 'package:propedia/presentation/providers/history_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 import 'package:propedia/presentation/widgets/common/login_prompt_dialog.dart';
+import 'package:propedia/presentation/widgets/common/loading_progress_indicator.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -470,20 +471,41 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       case SearchStatus.initial:
         return const Center(child: Text('검색 결과가 없습니다'));
       case SearchStatus.loading:
-        return const Center(child: CircularProgressIndicator());
+        return const LoadingProgressIndicator();
       case SearchStatus.error:
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                state.errorMessage ?? '오류가 발생했습니다',
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  state.errorMessage ?? '오류가 발생했습니다',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('다시 시도'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '네트워크 연결을 확인하고\n다시 시도해 보세요',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         );
       case SearchStatus.success:
