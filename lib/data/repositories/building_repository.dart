@@ -98,28 +98,39 @@ class BuildingRepository {
 
       final validResults = <LandTypeSearchResult>[];
 
-      // 대지 결과 확인 - success이고 실제 데이터가 있는지 체크
-      if (results[0] != null && _hasValidData(results[0]!)) {
-        debugPrint('✅ 대지 검색 성공 (실제 데이터 있음)');
+      final daejiValid = results[0] != null && _hasValidData(results[0]!);
+      final imyaValid = results[1] != null && _hasValidData(results[1]!);
+      final daejiHasLand = results[0] != null && _hasLandData(results[0]!);
+      final imyaHasLand = results[1] != null && _hasLandData(results[1]!);
+
+      // 대지 결과 추가
+      if (daejiValid && daejiHasLand) {
+        debugPrint('✅ 대지 검색 성공 (토지 정보 있음)');
         validResults.add(LandTypeSearchResult(
           landType: '1',
           landTypeName: '대지',
           response: results[0]!,
         ));
-      } else {
-        debugPrint('ℹ️ 대지 검색: 데이터 없음');
       }
 
-      // 임야 결과 확인 - success이고 실제 데이터가 있는지 체크
-      if (results[1] != null && _hasValidData(results[1]!)) {
-        debugPrint('✅ 임야 검색 성공 (실제 데이터 있음)');
+      // 임야 결과 추가
+      if (imyaValid && imyaHasLand) {
+        debugPrint('✅ 임야 검색 성공 (토지 정보 있음)');
         validResults.add(LandTypeSearchResult(
           landType: '2',
           landTypeName: '임야 (산)',
           response: results[1]!,
         ));
-      } else {
-        debugPrint('ℹ️ 임야 검색: 데이터 없음');
+      }
+
+      // 둘 다 토지 정보 없지만 도로명주소만 있는 경우 → 대지 결과만 반환 (중복 방지)
+      if (validResults.isEmpty && daejiValid && !daejiHasLand) {
+        debugPrint('✅ 대지 검색 성공 (도로명주소만 있음, 토지 정보 없음)');
+        validResults.add(LandTypeSearchResult(
+          landType: '1',
+          landTypeName: '대지',
+          response: results[0]!,
+        ));
       }
 
       debugPrint('📡 양쪽 검색 결과: ${validResults.length}건');
@@ -130,11 +141,22 @@ class BuildingRepository {
     }
   }
 
+  /// 토지 정보(VWorld 데이터)가 있는지 확인
+  bool _hasLandData(BuildingSearchResponse response) {
+    final land = response.land;
+    return land != null && (
+        (land.landArea != null && land.landArea! > 0) ||
+        (land.publicLandPrice != null && land.publicLandPrice! > 0)
+    );
+  }
+
   /// 검색 결과에 실제 유효한 데이터가 있는지 확인
   ///
-  /// 핵심: 토지 정보(land)가 있어야 해당 토지 유형이 실제로 존재하는 것.
-  /// 백엔드는 land_type과 관계없이 동일한 건물 정보를 반환하지만,
-  /// 토지 정보는 실제 해당 토지 유형이 존재할 때만 반환함.
+  /// 유효 조건 (OR):
+  /// 1. 토지 정보(land)가 있음 - VWorld API에서 데이터 반환
+  /// 2. 도로명주소(newPlatPlc)가 있음 - juso.go.kr API에서 주소 확인됨
+  ///
+  /// 둘 중 하나라도 있으면 해당 지번이 실제로 존재하는 것으로 판단.
   bool _hasValidData(BuildingSearchResponse response) {
     if (!response.success) return false;
 
@@ -144,25 +166,31 @@ class BuildingRepository {
       return false;
     }
 
-    // 토지 정보가 있는지 확인 (핵심 검증)
-    // 토지 정보가 있어야 해당 land_type이 실제로 존재하는 것
+    // 1. 토지 정보가 있는지 확인
     final land = response.land;
     final hasLand = land != null && (
         (land.landArea != null && land.landArea! > 0) ||
         (land.publicLandPrice != null && land.publicLandPrice! > 0)
     );
 
+    // 2. 도로명주소가 있는지 확인 (VWorld에 토지 정보 없어도 juso.go.kr에서 확인된 경우)
+    final building = response.building;
+    final hasRoadAddress = building?.buildingInfo?.newPlatPlc != null &&
+        building!.buildingInfo!.newPlatPlc!.isNotEmpty;
+
     debugPrint('📡 데이터 유효성 검사:');
     debugPrint('   - hasLand: $hasLand');
+    debugPrint('   - hasRoadAddress: $hasRoadAddress');
     if (land != null) {
       debugPrint('     - landArea: ${land.landArea}');
       debugPrint('     - publicLandPrice: ${land.publicLandPrice}');
-    } else {
-      debugPrint('     - land is null (해당 토지 유형 없음)');
+    }
+    if (hasRoadAddress) {
+      debugPrint('     - newPlatPlc: ${building?.buildingInfo?.newPlatPlc}');
     }
 
-    // 토지 정보가 있어야만 유효 (건물 정보는 land_type 구분 없이 반환되므로 신뢰 불가)
-    return hasLand;
+    // 토지 정보 또는 도로명주소 중 하나라도 있으면 유효
+    return hasLand || hasRoadAddress;
   }
 
   /// 에러를 throw하지 않고 null 반환하는 지번 검색 (내부용)
@@ -186,11 +214,11 @@ class BuildingRepository {
     }
   }
 
-  /// 법정동 검색 (자동완성)
-  Future<List<BjdongSearchItem>> searchBjdong(String query) async {
+  /// 법정동 검색 (지번 필터링 지원)
+  Future<List<BjdongSearchItem>> searchBjdong(String query, {String? bun, String? ji}) async {
     try {
-      debugPrint('📡 API 호출: searchBjdong($query)');
-      final response = await _buildingApi.searchBjdong(query);
+      debugPrint('📡 API 호출: searchBjdong($query, bun=$bun, ji=$ji)');
+      final response = await _buildingApi.searchBjdong(query, bun: bun, ji: ji);
       debugPrint('📡 API 응답: success=${response.success}, count=${response.results.length}');
       if (response.success) {
         return response.results;
