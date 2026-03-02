@@ -1,11 +1,11 @@
 # 마케팅 파일 배포 가이드
 
-## 배포 현황 (2026-02-22 업데이트)
+## 배포 현황 (2026-03-02 업데이트)
 
 | URL | 설명 | 상태 |
 |-----|------|------|
+| https://goldenrabbit.biz/ | 메인 사이트 (금토끼부동산) | ✅ 완료 |
 | https://goldenrabbit.biz/proppedia/ | 앱 소개 랜딩 페이지 | ✅ 완료 |
-| https://goldenrabbit.biz/proppedia-app/ | Flutter Web 앱 | ✅ 완료 |
 | https://goldenrabbit.biz/robots.txt | 크롤링 규칙 | ✅ 완료 |
 | https://goldenrabbit.biz/sitemap.xml | 사이트맵 | ✅ 완료 |
 
@@ -15,6 +15,7 @@
 |------|----------|
 | 2026-02-20 | 최초 배포 (앱 미리보기, 기능 소개) |
 | 2026-02-22 | 섹션 분리 및 PDF 기능 추가 |
+| 2026-03-02 | SEO 개선: canonical 태그, OG 태그, Schema.org, description 추가, sitemap/robots.txt 정리 |
 
 ### 2026-02-22 업데이트 내용
 - **앱 미리보기 섹션** (6개 이미지): 홈, 도로명/지번/지도 검색, 검색 결과
@@ -193,6 +194,72 @@ scp -r build/web/* root@175.119.224.71:/home/webapp/goldenrabbit/frontend/public
 ### 웹페이지 수집 요청 완료
 - `https://goldenrabbit.biz`
 - `https://goldenrabbit.biz/proppedia/`
+
+## SEO 개선 (2026-03-02)
+
+### Google Search Console 색인 문제 해결
+
+Google Search Console에서 "페이지 색인이 생성되지 않음" 문제 대응:
+
+#### 1차 수정 - canonical 태그 및 sitemap 정리
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `index.html` (루트) | `<link rel="canonical">` 추가 |
+| `proppedia/index.html` | canonical 태그 이미 존재 (수정 불필요) |
+| `privacy-policy.html` | `<link rel="canonical">`, `<meta name="description">` 추가 |
+| `terms-of-service.html` | `<link rel="canonical">`, `<meta name="description">` 추가 |
+| `app/index.html` | `<link rel="canonical">`, `<meta name="description">` 추가 |
+| `sitemap.xml` | `/proppedia-app/` 제거, `/privacy-policy` → `.html`, `/terms` → `/terms-of-service.html` 수정 |
+
+#### 2차 수정 - OG 태그, Schema.org, robots.txt
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `index.html` (루트) | OG 태그, Twitter Card, `<meta name="robots">`, Schema.org `RealEstateAgent` 구조화 데이터, `fb:app_id` 추가 |
+| `proppedia/index.html` | `fb:app_id` 추가 |
+| `robots.txt` | 존재하지 않는 `/proppedia-app/` Allow 제거, `*.json$` → `*.json` 문법 수정, 날짜 업데이트 |
+
+#### 3차 수정 - 설정 검증 및 데이터 정합성
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `sitemap.xml` | lastmod 전체 `2026-03-02`로 업데이트 |
+| `index.html` (루트) | Schema.org `sameAs`를 Instagram/Facebook 프로필 URL로 변경 |
+| `proppedia/index.html` | Schema.org `aggregateRating` 삭제 (미출시 앱 허위 데이터 방지) |
+
+#### 4차 수정 - Lighthouse 성능 개선
+
+| 파일 | 변경 내용 | 효과 |
+|------|----------|------|
+| `proppedia/index.html` | 히어로 이미지에 `width`/`height` 속성 + CSS `height: auto` 추가 | CLS 0.461 → 0 (완전 해결) |
+| `proppedia/index.html` | LCP 이미지에 `fetchpriority="high"` 추가 | LCP 우선 로딩 |
+| `proppedia/index.html` | 로고 이미지에 `width`/`height` 속성 + CSS `width: auto` 추가 | CLS 방지 |
+
+#### 해결된 문제
+
+- **"사용자가 선택한 표준이 없는 중복 페이지"**: canonical 태그 추가로 대표 URL 지정
+- **"찾을 수 없음(404)"**: sitemap에 존재하지 않는 URL이 있었음 → 수정
+- **"리디렉션이 포함된 페이지"**: sitemap URL을 실제 파일 경로와 일치시킴
+- **"<meta name="description"> 누락"**: 모든 페이지에 description 추가
+- **CLS 0.461**: 이미지 width/height + CSS height:auto로 해결 (0.461 → 0)
+
+#### Lighthouse 결과 (proppedia)
+
+| 항목 | 수정 전 | 수정 후 |
+|------|---------|---------|
+| SEO | 100 | 100 |
+| Best Practices | 100 | 100 |
+| CLS | 0.461 | **0** |
+
+#### 후속 작업
+
+- [x] Google Search Console에서 sitemap 재제출 ✅
+- [ ] 색인 생성 요청 (URL 검사 → 색인 생성 요청)
+- [x] 네이버 서치어드바이저에서 사이트맵 재제출 ✅
+- [x] [Google Rich Results Test](https://search.google.com/test/rich-results) 확인 ✅ (RealEstateAgent, MobileApplication 감지)
+- [x] [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) 확인 ✅ (OG 태그 정상)
+- [x] Lighthouse (Chrome DevTools) 확인 ✅ (Mobile-Friendly Test 대체)
 
 ---
 
