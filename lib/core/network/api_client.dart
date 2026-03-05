@@ -22,7 +22,7 @@ class ApiClient {
     );
 
     dio.interceptors.addAll([
-      AuthInterceptor(tokenStorage: tokenStorage, dio: dio),
+      AuthInterceptor(tokenStorage: tokenStorage),
       LogInterceptor(
         requestBody: true,
         responseBody: true,

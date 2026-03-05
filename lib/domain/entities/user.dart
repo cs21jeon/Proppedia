@@ -9,6 +9,7 @@ class User with _$User {
     required int id,
     required String email,
     String? name,
+    @JsonKey(name: 'avatar_url') String? avatarUrl,
     @Default(false) @JsonKey(name: 'is_verified') bool isVerified,
     @JsonKey(name: 'created_at') String? createdAt,
   }) = _User;

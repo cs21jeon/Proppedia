@@ -23,6 +23,8 @@ mixin _$User {
   int get id => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get name => throw _privateConstructorUsedError;
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_verified')
   bool get isVerified => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -42,6 +44,7 @@ abstract class $UserCopyWith<$Res> {
       {int id,
       String email,
       String? name,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
       @JsonKey(name: 'is_verified') bool isVerified,
       @JsonKey(name: 'created_at') String? createdAt});
 }
@@ -62,6 +65,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? id = null,
     Object? email = null,
     Object? name = freezed,
+    Object? avatarUrl = freezed,
     Object? isVerified = null,
     Object? createdAt = freezed,
   }) {
@@ -77,6 +81,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
       name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       isVerified: null == isVerified
           ? _value.isVerified
@@ -101,6 +109,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       {int id,
       String email,
       String? name,
+      @JsonKey(name: 'avatar_url') String? avatarUrl,
       @JsonKey(name: 'is_verified') bool isVerified,
       @JsonKey(name: 'created_at') String? createdAt});
 }
@@ -118,6 +127,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? id = null,
     Object? email = null,
     Object? name = freezed,
+    Object? avatarUrl = freezed,
     Object? isVerified = null,
     Object? createdAt = freezed,
   }) {
@@ -133,6 +143,10 @@ class __$$UserImplCopyWithImpl<$Res>
       name: freezed == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      avatarUrl: freezed == avatarUrl
+          ? _value.avatarUrl
+          : avatarUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       isVerified: null == isVerified
           ? _value.isVerified
@@ -153,6 +167,7 @@ class _$UserImpl implements _User {
       {required this.id,
       required this.email,
       this.name,
+      @JsonKey(name: 'avatar_url') this.avatarUrl,
       @JsonKey(name: 'is_verified') this.isVerified = false,
       @JsonKey(name: 'created_at') this.createdAt});
 
@@ -166,6 +181,9 @@ class _$UserImpl implements _User {
   @override
   final String? name;
   @override
+  @JsonKey(name: 'avatar_url')
+  final String? avatarUrl;
+  @override
   @JsonKey(name: 'is_verified')
   final bool isVerified;
   @override
@@ -174,7 +192,7 @@ class _$UserImpl implements _User {
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, name: $name, isVerified: $isVerified, createdAt: $createdAt)';
+    return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, isVerified: $isVerified, createdAt: $createdAt)';
   }
 
   @override
@@ -185,6 +203,8 @@ class _$UserImpl implements _User {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.avatarUrl, avatarUrl) ||
+                other.avatarUrl == avatarUrl) &&
             (identical(other.isVerified, isVerified) ||
                 other.isVerified == isVerified) &&
             (identical(other.createdAt, createdAt) ||
@@ -193,8 +213,8 @@ class _$UserImpl implements _User {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, email, name, isVerified, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType, id, email, name, avatarUrl, isVerified, createdAt);
 
   @JsonKey(ignore: true)
   @override
@@ -215,6 +235,7 @@ abstract class _User implements User {
       {required final int id,
       required final String email,
       final String? name,
+      @JsonKey(name: 'avatar_url') final String? avatarUrl,
       @JsonKey(name: 'is_verified') final bool isVerified,
       @JsonKey(name: 'created_at') final String? createdAt}) = _$UserImpl;
 
@@ -226,6 +247,9 @@ abstract class _User implements User {
   String get email;
   @override
   String? get name;
+  @override
+  @JsonKey(name: 'avatar_url')
+  String? get avatarUrl;
   @override
   @JsonKey(name: 'is_verified')
   bool get isVerified;

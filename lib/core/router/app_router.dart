@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
 import 'package:propedia/presentation/screens/auth/login_screen.dart';
-import 'package:propedia/presentation/screens/auth/register_screen.dart';
 import 'package:propedia/presentation/screens/home/home_screen.dart';
 import 'package:propedia/presentation/screens/splash/splash_screen.dart';
 import 'package:propedia/presentation/screens/search/search_road_screen.dart';
@@ -45,8 +44,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final canAccess = isAuthenticated || isGuest;
       final isLoading = authState.status == AuthStatus.loading ||
           authState.status == AuthStatus.initial;
-      final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+      final isAuthRoute = state.matchedLocation == '/login';
 
       // 로딩 중이면 스플래시 화면
       if (isLoading) {
@@ -73,10 +71,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/home',

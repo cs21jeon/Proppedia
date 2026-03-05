@@ -82,6 +82,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
 
     final authState = ref.watch(authProvider);
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
     final user = authState.user;
     final themeMode = ref.watch(themeModeProvider);
     final isDarkMode = themeMode == ThemeMode.dark;
@@ -126,7 +127,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
 
               // 로그아웃 버튼 (로그인한 경우에만 표시)
-              if (authState.status == AuthStatus.authenticated)
+              if (isAuthenticated)
                 _buildLogoutButton(),
               const SizedBox(height: 16),
             ],
@@ -145,9 +146,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildUserInfoCard(dynamic user) {
     final authState = ref.watch(authProvider);
-    final isGuest = authState.status == AuthStatus.guest;
+    final isAuthenticated = authState.status == AuthStatus.authenticated;
 
-    if (isGuest) {
+    if (!isAuthenticated) {
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -190,30 +191,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => context.push('/login'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('로그인'),
-                    ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => context.push('/register'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('회원가입'),
-                    ),
-                  ),
-                ],
+                  child: const Text('Google 계정으로 로그인'),
+                ),
               ),
             ],
           ),

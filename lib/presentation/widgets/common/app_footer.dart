@@ -9,57 +9,57 @@ class AppFooterSimple extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           border: Border(
             top: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/images/proppedia_icon.png',
-              height: 13,
-              errorBuilder: (context, error, stackTrace) =>
-                  Icon(Icons.home, size: 13, color: Colors.grey[400]),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'Proppedia 제공',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[500],
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '|',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[400],
-              ),
-            ),
-            const SizedBox(width: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: Image.asset(
-                'assets/images/goldenrabbit_icon.png',
-                height: 13,
-                errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.business, size: 13, color: Colors.grey[400]),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                '금토끼부동산 제작',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey[500],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/propnet_icon.png',
+                  height: 13,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(Icons.language, size: 13, color: Colors.grey[400]),
                 ),
-                overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 4),
+                Text(
+                  '프롭넷',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '|',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '부동산 종합 서비스',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '© 2026 Propnet',
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.grey[400],
               ),
             ),
           ],
@@ -78,7 +78,7 @@ class AppFooterWithDisclaimer extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[900] : Colors.grey[50],
           border: Border(
@@ -99,25 +99,24 @@ class AppFooterWithDisclaimer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // 로고
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
-                  'assets/images/proppedia_icon.png',
+                  'assets/images/propnet_icon.png',
                   height: 13,
                   errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.home, size: 13, color: Colors.grey[400]),
+                      Icon(Icons.language, size: 13, color: Colors.grey[400]),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Proppedia 제공',
+                  '프롭넷',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey[500],
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   '|',
                   style: TextStyle(
@@ -125,28 +124,23 @@ class AppFooterWithDisclaimer extends StatelessWidget {
                     color: Colors.grey[400],
                   ),
                 ),
-                const SizedBox(width: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: Image.asset(
-                    'assets/images/goldenrabbit_icon.png',
-                    height: 13,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Icon(Icons.business, size: 13, color: Colors.grey[400]),
-                  ),
-                ),
                 const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    '금토끼부동산 제작',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[500],
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  '부동산 종합 서비스',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[500],
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '© 2026 Propnet',
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.grey[400],
+              ),
             ),
           ],
         ),

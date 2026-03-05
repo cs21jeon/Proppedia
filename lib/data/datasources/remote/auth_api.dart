@@ -6,65 +6,42 @@ class AuthApi {
 
   AuthApi(this._dio);
 
-  /// 회원가입
-  Future<AuthResponse> register(RegisterRequest request) async {
+  /// Google 로그인
+  Future<AuthResponse> loginWithGoogle(GoogleLoginRequest request) async {
     try {
       final response = await _dio.post(
-        '/app/api/auth/register',
+        '/app/api/auth/google',
         data: request.toJson(),
       );
       return AuthResponse.fromJson(response.data);
     } on DioException catch (e) {
-      // 에러 응답에서 메시지 추출
-      if (e.response?.data != null) {
+      if (e.response?.data != null && e.response!.data is Map<String, dynamic>) {
         return AuthResponse.fromJson(e.response!.data);
       }
-      rethrow;
-    }
-  }
-
-  /// 로그인
-  Future<AuthResponse> login(LoginRequest request) async {
-    try {
-      final response = await _dio.post(
-        '/app/api/auth/login',
-        data: request.toJson(),
-      );
-      return AuthResponse.fromJson(response.data);
-    } on DioException catch (e) {
-      // 에러 응답에서 메시지 추출
-      if (e.response?.data != null) {
-        return AuthResponse.fromJson(e.response!.data);
-      }
-      rethrow;
-    }
-  }
-
-  /// 토큰 갱신
-  Future<AuthResponse> refreshToken(RefreshTokenRequest request) async {
-    try {
-      final response = await _dio.post(
-        '/app/api/auth/refresh',
-        data: request.toJson(),
-      );
-      return AuthResponse.fromJson(response.data);
-    } on DioException catch (e) {
-      if (e.response?.data != null) {
-        return AuthResponse.fromJson(e.response!.data);
-      }
-      rethrow;
+      throw Exception('서버 연결에 실패했습니다 (${e.response?.statusCode ?? 'network error'})');
     }
   }
 
   /// 내 정보 조회
   Future<UserResponse> getMe() async {
-    final response = await _dio.get('/app/api/auth/me');
-    return UserResponse.fromJson(response.data);
+    try {
+      final response = await _dio.get('/app/api/auth/me');
+      return UserResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response!.data is Map<String, dynamic>) {
+        return UserResponse.fromJson(e.response!.data);
+      }
+      throw Exception('서버 연결에 실패했습니다 (${e.response?.statusCode ?? 'network error'})');
+    }
   }
 
   /// 로그아웃
   Future<ApiResponse> logout() async {
-    final response = await _dio.post('/app/api/auth/logout');
-    return ApiResponse.fromJson(response.data);
+    try {
+      final response = await _dio.post('/app/api/auth/logout');
+      return ApiResponse.fromJson(response.data);
+    } on DioException catch (_) {
+      return const ApiResponse(success: true, message: '로그아웃');
+    }
   }
 }

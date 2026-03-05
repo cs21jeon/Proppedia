@@ -33,11 +33,16 @@ class BuildingApi {
     return BuildingSearchResponse.fromJson(response.data);
   }
 
-  /// 법정동 검색 (자동완성)
-  Future<BjdongSearchResponse> searchBjdong(String query) async {
+  /// 법정동 검색 (지번 필터링 지원)
+  Future<BjdongSearchResponse> searchBjdong(String query, {String? bun, String? ji}) async {
+    final params = <String, dynamic>{'query': query};
+    if (bun != null && bun.isNotEmpty) {
+      params['bun'] = bun;
+      params['ji'] = ji ?? '0';
+    }
     final response = await _dio.get(
       '/app/api/bjdong/search',
-      queryParameters: {'query': query},
+      queryParameters: params,
     );
     return BjdongSearchResponse.fromJson(response.data);
   }

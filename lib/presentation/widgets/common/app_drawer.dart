@@ -122,7 +122,7 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                '© 2024 Proppedia',
+                '© 2026 프롭넷 (PropNet)',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[500],
@@ -278,43 +278,36 @@ class AppDrawer extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.asset(
-                    'assets/images/goldenrabbit_icon.png',
-                    height: 24,
-                    width: 24,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.home_work,
-                      color: Color(0xFFD4AF37),
-                      size: 24,
-                    ),
+                Image.asset(
+                  'assets/images/propnet_icon.png',
+                  height: 24,
+                  width: 24,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Icon(
+                    Icons.language,
+                    color: AppColors.primary,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  '금토끼부동산중개',
+                  '프롭넷 (PropNet)',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildInfoRowCompact('대표', '전창성', isDark),
-            const SizedBox(height: 5),
-            _buildInfoRowCompact('전화', '02-3471-7377', isDark),
-            const SizedBox(height: 5),
-            _buildInfoRowCompact(
-              '주소',
-              '서울시 동작구 사당동 272-26 남성역센트럴뷰 1층',
-              isDark,
+            Text(
+              '프롭넷은 부동산과 관련한 다양한 서비스를 제공합니다.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
             ),
             const SizedBox(height: 12),
-            Divider(color: isDark ? Colors.grey[700] : Colors.grey[300]),
+            _buildInfoColumn('웹사이트', 'https://goldenrabbit.biz/propnet', isDark),
             const SizedBox(height: 8),
-            _buildInfoRowWide('사업자등록번호', '520-41-01170', isDark),
-            const SizedBox(height: 4),
-            _buildInfoRowWide('중개등록번호', '11590-2024-00048', isDark),
+            _buildInfoColumn('문의', 'cs21.jeon@gmail.com', isDark),
           ],
         ),
         actions: [
@@ -324,6 +317,32 @@ class AppDrawer extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// 라벨과 값을 세로로 표시
+  Widget _buildInfoColumn(String label, String value, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 

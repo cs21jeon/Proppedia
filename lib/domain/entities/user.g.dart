@@ -10,6 +10,7 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
       id: (json['id'] as num).toInt(),
       email: json['email'] as String,
       name: json['name'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       isVerified: json['is_verified'] as bool? ?? false,
       createdAt: json['created_at'] as String?,
     );
@@ -19,6 +20,7 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'id': instance.id,
       'email': instance.email,
       'name': instance.name,
+      'avatar_url': instance.avatarUrl,
       'is_verified': instance.isVerified,
       'created_at': instance.createdAt,
     };

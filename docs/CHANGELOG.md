@@ -6,6 +6,29 @@
 
 ---
 
+## [1.0.2+8] - 2026-03-05
+
+### 추가
+- **Google 로그인 기능** (서버 + 앱)
+  - Google Sign-In → JWT 토큰 발급 인증 플로우 구현
+  - 서버: `app_auth.py` 인증 모듈 (Flask Blueprint, port 8000)
+  - 앱: AuthProvider, AuthRepository, AuthApi 구현
+  - 프로필 화면에 사용자 정보 및 로그아웃 버튼 표시
+- **PropNet 아이콘 추가** (`assets/images/propnet_icon.png`)
+
+### 개선
+- **브랜딩 업데이트**
+  - 앱 정보 다이얼로그: PropNet 아이콘, 설명문, 웹사이트/문의 세로 레이아웃
+  - 푸터 리디자인: `[propnet_icon] 프롭넷 | 부동산 종합 서비스` + `© 2026 Propnet`
+  - Proppedia 제공 문구 제거, PropNet 브랜드 중심으로 통일
+
+### 서버
+- nginx 설정: `/app/api/auth/` → port 8000 (인증), `/app/api/` → port 5000 (검색) 분리
+- `app_auth.py`: 기존 `app_users` 테이블 스키마(provider/provider_id) 호환
+- 사용자 계정 데이터 마이그레이션 (검색기록 62건, 즐겨찾기 4건, 통계 13건)
+
+---
+
 ## [1.0.2+7] - 2026-03-01
 
 ### 개선

@@ -27,6 +27,65 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   List<String> _hoList = [];
   bool _historySaved = false; // 검색 기록 저장 여부
 
+  /// 시군구명 정규화 (화성시동탄구 → 화성시 동탄구)
+  String _normalizeDistrictName(String? sigunguName) {
+    if (sigunguName == null || sigunguName.isEmpty) return '';
+    final pattern = RegExp(r'^(.+시)(.+구)$');
+    final match = pattern.firstMatch(sigunguName);
+    if (match != null) {
+      return '${match.group(1)} ${match.group(2)}';
+    }
+    return sigunguName;
+  }
+
+  /// 주소에 구 이름 삽입 (신규 행정구역용)
+  /// "화성시 오산동 988" → "화성시 동탄구 오산동 988"
+  String _injectDistrictName(String address, String normalizedSigungu) {
+    if (address.isEmpty || normalizedSigungu.isEmpty) return address;
+
+    // "화성시 동탄구"에서 시, 구 분리
+    final parts = normalizedSigungu.split(' ');
+    if (parts.length < 2) return address;
+
+    final city = parts[0];     // "화성시"
+    final district = parts[1]; // "동탄구"
+
+    // 이미 구 이름이 있으면 그대로 반환
+    if (address.contains(district)) return address;
+
+    // "화성시 " 뒤에 "동탄구 " 삽입
+    return address.replaceFirst('$city ', '$city $district ');
+  }
+
+  /// 지도 마커 라벨 생성 (동+지번 형태)
+  String _buildMarkerLabel(BuildingSearchResponse result) {
+    final address = result.address;
+    final codes = result.codes;
+
+    // 동 이름
+    String? dongName = address?.eupmyeondongName;
+
+    // 지번 (PNU에서 추출)
+    String? jibun;
+    if (codes?.pnu != null && codes!.pnu!.length >= 19) {
+      final pnu = codes.pnu!;
+      final landType = pnu.substring(10, 11);
+      final bun = int.tryParse(pnu.substring(11, 15))?.toString() ?? '';
+      final ji = int.tryParse(pnu.substring(15, 19))?.toString() ?? '';
+
+      if (bun.isNotEmpty) {
+        final sanPrefix = landType == '2' ? '산 ' : '';
+        jibun = (ji.isNotEmpty && ji != '0') ? '$sanPrefix$bun-$ji' : '$sanPrefix$bun';
+      }
+    }
+
+    // "오산동 988" 형태
+    if (dongName != null && jibun != null) {
+      return '$dongName $jibun';
+    }
+    return jibun ?? '';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -616,26 +675,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 style: TextStyle(fontSize: 10, color: Colors.grey[400]),
               ),
               const SizedBox(width: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: Image.asset(
-                  'assets/images/goldenrabbit_icon.png',
-                  height: 14,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.business, size: 14, color: Colors.grey[400]),
-                ),
+              Image.asset(
+                'assets/images/propnet_icon.png',
+                height: 14,
+                errorBuilder: (context, error, stackTrace) =>
+                    Icon(Icons.language, size: 14, color: Colors.grey[400]),
               ),
               const SizedBox(width: 4),
               Text(
-                '금토끼부동산 제작',
+                '프롭넷 제작',
                 style: TextStyle(fontSize: 10, color: Colors.grey[700], fontWeight: FontWeight.w500),
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'https://goldenrabbit.biz',
-            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -649,6 +700,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final address = result.address;
     final codes = result.codes;
     final isForest = _isForestLand(codes?.pnu);
+
+    // 신규 행정구역 주소 보정용 시군구명 정규화
+    final normalizedSigungu = _normalizeDistrictName(address?.sigunguName);
+    final hasNewDistrict = normalizedSigungu.contains('구') &&
+        normalizedSigungu.split(' ').length >= 2;
 
     // 지번 주소 (recapTitleInfo 우선 -> buildingInfo -> fallback 생성)
     String? platPlc = recapTitleInfo?['plat_plc'] as String?;
@@ -666,10 +722,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     }
 
     if (platPlc == null || platPlc == '-' || platPlc.trim().isEmpty) {
-      // Fallback 지번 생성 (시도 포함)
+      // Fallback 지번 생성 (정규화된 시군구명 사용)
       final parts = <String>[];
       if (address?.sidoName != null) parts.add(address!.sidoName!);
-      if (address?.sigunguName != null) parts.add(address!.sigunguName!);
+      if (normalizedSigungu.isNotEmpty) {
+        parts.add(normalizedSigungu);
+      }
       if (address?.eupmyeondongName != null) parts.add(address!.eupmyeondongName!);
       if (codes?.pnu != null && codes!.pnu!.length >= 19) {
         final bun = int.tryParse(codes.pnu!.substring(11, 15))?.toString() ?? '';
@@ -688,6 +746,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       platPlc = '${address!.sidoName!} $platPlc';
     }
 
+    // 신규 행정구역인 경우 구 이름 삽입
+    if (platPlc != null && hasNewDistrict) {
+      platPlc = _injectDistrictName(platPlc, normalizedSigungu);
+    }
+
     // 번지 제거
     platPlc = platPlc?.replaceAll(RegExp(r'번지$'), '').trim();
 
@@ -699,6 +762,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     if (newPlatPlc != null && newPlatPlc.isNotEmpty && newPlatPlc != '-') {
       if (address?.sidoName != null && !newPlatPlc.startsWith(address!.sidoName!)) {
         newPlatPlc = '${address.sidoName!} $newPlatPlc';
+      }
+      // 신규 행정구역인 경우 구 이름 삽입
+      if (hasNewDistrict) {
+        newPlatPlc = _injectDistrictName(newPlatPlc, normalizedSigungu);
       }
     }
 
@@ -1366,6 +1433,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 child: _ResultMapWidget(
                   address: platPlc,
                   pnu: codes?.pnu,
+                  markerLabel: _buildMarkerLabel(result),
                 ),
               ),
             ),
@@ -1452,10 +1520,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 class _ResultMapWidget extends ConsumerStatefulWidget {
   final String address;
   final String? pnu;
+  final String? markerLabel;
 
   const _ResultMapWidget({
     required this.address,
     this.pnu,
+    this.markerLabel,
   });
 
   @override
@@ -1535,6 +1605,7 @@ class _ResultMapWidgetState extends ConsumerState<_ResultMapWidget> {
                     Marker(
                       markerId: 'location',
                       latLng: LatLng(lat, lng),
+                      infoWindowContent: widget.markerLabel ?? '',
                     ),
                   };
                 });

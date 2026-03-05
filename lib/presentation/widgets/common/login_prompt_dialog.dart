@@ -66,17 +66,10 @@ class LoginPromptDialog extends StatelessWidget {
             style: TextStyle(color: Colors.grey[600]),
           ),
         ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            context.push('/login');
-          },
-          child: const Text('로그인'),
-        ),
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
-            context.push('/register');
+            context.push('/login');
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
@@ -85,7 +78,7 @@ class LoginPromptDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text('회원가입'),
+          child: const Text('Google 로그인'),
         ),
       ],
     );

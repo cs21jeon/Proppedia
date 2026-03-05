@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:propedia/core/network/api_client.dart';
 import 'package:propedia/core/storage/token_storage.dart';
 import 'package:propedia/data/datasources/remote/auth_api.dart';
@@ -67,6 +69,10 @@ class AuthState {
 // AuthNotifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: '846392940969-a7k37gkon1p451mlnhp0oj9qaok1d8o1.apps.googleusercontent.com',
+  );
 
   AuthNotifier(this._authRepository) : super(const AuthState());
 
@@ -77,65 +83,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _authRepository.checkAutoLogin();
       if (user != null) {
+        debugPrint('[AUTH] 자동 로그인 성공: ${user.email}');
         state = AuthState(status: AuthStatus.authenticated, user: user);
       } else {
-        // 토큰 없으면 게스트 모드로 진입
+        debugPrint('[AUTH] 자동 로그인 실패: 토큰 없음 또는 서버 응답 실패');
         state = const AuthState(status: AuthStatus.guest);
       }
     } catch (e) {
-      // 에러 발생해도 게스트 모드로 진입
+      debugPrint('[AUTH] 자동 로그인 에러: $e');
       state = const AuthState(status: AuthStatus.guest);
     }
   }
 
-  /// 로그인
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  /// Google 로그인
+  Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
-      final user = await _authRepository.login(
-        email: email,
-        password: password,
-      );
+      debugPrint('[AUTH] Google 로그인 시작...');
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
+        debugPrint('[AUTH] Google 로그인 취소됨');
+        state = const AuthState(status: AuthStatus.guest);
+        return;
+      }
+
+      debugPrint('[AUTH] Google 계정: ${account.email}');
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      debugPrint('[AUTH] idToken: ${idToken != null ? '${idToken.substring(0, 20)}...' : 'null'}');
+
+      if (idToken == null) {
+        throw Exception('Google ID Token을 가져올 수 없습니다');
+      }
+
+      // 서버에 토큰 검증 요청
+      debugPrint('[AUTH] 서버 로그인 요청 중...');
+      final user = await _authRepository.loginWithGoogle(idToken: idToken);
+      debugPrint('[AUTH] 로그인 성공: ${user.email} (${user.name})');
       state = AuthState(status: AuthStatus.authenticated, user: user);
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[AUTH] 로그인 에러: $e');
+      debugPrint('[AUTH] 스택: $stack');
       state = AuthState(
         status: AuthStatus.error,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
       );
-    }
-  }
-
-  /// 회원가입
-  Future<bool> register({
-    required String email,
-    required String password,
-    String? name,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading);
-
-    try {
-      await _authRepository.register(
-        email: email,
-        password: password,
-        name: name,
-      );
-      state = const AuthState(status: AuthStatus.unauthenticated);
-      return true;
-    } catch (e) {
-      state = AuthState(
-        status: AuthStatus.error,
-        errorMessage: e.toString().replaceFirst('Exception: ', ''),
-      );
-      return false;
     }
   }
 
   /// 로그아웃
   Future<void> logout() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
     await _authRepository.logout();
     state = const AuthState(status: AuthStatus.guest);
   }
@@ -144,7 +145,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void clearError() {
     if (state.status == AuthStatus.error) {
       state = state.copyWith(
-        status: AuthStatus.unauthenticated,
+        status: AuthStatus.guest,
         errorMessage: null,
       );
     }

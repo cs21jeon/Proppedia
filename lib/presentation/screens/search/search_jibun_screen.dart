@@ -20,6 +20,35 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
   final _addressController = TextEditingController();
   final _addressFocusNode = FocusNode();
 
+  /// 시군구명 정규화 (화성시동탄구 → 화성시 동탄구)
+  String _normalizeDistrictName(String? sigunguName) {
+    if (sigunguName == null || sigunguName.isEmpty) return '';
+    final pattern = RegExp(r'^(.+시)(.+구)$');
+    final match = pattern.firstMatch(sigunguName);
+    if (match != null) {
+      return '${match.group(1)} ${match.group(2)}';
+    }
+    return sigunguName;
+  }
+
+  /// 법정동 전체 주소 포맷팅 (정규화된 시군구명 사용)
+  String _formatFullAddress(BjdongSearchItem item) {
+    final parts = <String>[];
+    if (item.sidoName != null && item.sidoName!.isNotEmpty) {
+      parts.add(item.sidoName!);
+    }
+    if (item.sigunguName != null && item.sigunguName!.isNotEmpty) {
+      parts.add(_normalizeDistrictName(item.sigunguName));
+    }
+    if (item.eupmyeondongName != null && item.eupmyeondongName!.isNotEmpty) {
+      parts.add(item.eupmyeondongName!);
+    }
+    if (item.riName != null && item.riName!.isNotEmpty) {
+      parts.add(item.riName!);
+    }
+    return parts.join(' ');
+  }
+
   // 파싱 결과
   JibunParseResult? _parseResult;
 
@@ -113,12 +142,17 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
 
     try {
       final repository = ref.read(buildingRepositoryProvider);
-      final bjdongResults = await repository.searchBjdong(_parseResult!.addressQuery!);
+      // 지번이 있으면 해당 지번이 존재하는 법정동만 검색
+      final bjdongResults = await repository.searchBjdong(
+        _parseResult!.addressQuery!,
+        bun: _parseResult!.bun,
+        ji: _parseResult!.jiForApi,
+      );
 
       if (bjdongResults.isEmpty) {
         setState(() {
           _isSearchingBjdong = false;
-          _errorMessage = '해당 법정동을 찾을 수 없습니다: ${_parseResult!.addressQuery}';
+          _errorMessage = '해당 주소를 찾을 수 없습니다: ${_parseResult!.addressQuery} ${_parseResult!.bun}';
         });
         return;
       }
@@ -407,40 +441,61 @@ class _SearchJibunScreenState extends ConsumerState<SearchJibunScreen> {
             children: [
               const Icon(Icons.warning_amber, size: 18, color: Colors.orange),
               const SizedBox(width: 8),
-              Text(
-                '동일 이름 ${_bjdongResults.length}건 - 선택해주세요',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange,
+              Expanded(
+                child: Text(
+                  '동일 이름 ${_bjdongResults.length}건 - 선택해주세요',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
                 ),
               ),
+              if (_bjdongResults.length > 5)
+                Text(
+                  '스크롤 ↕',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange.shade700,
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
-          ..._bjdongResults.map((item) => InkWell(
-                onTap: () => _selectBjdongAndSearch(item),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  margin: const EdgeInsets.only(bottom: 4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_city, size: 18, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          item.fullAddress ?? item.eupmyeondongName ?? '',
-                          style: const TextStyle(fontSize: 14),
+          // 최대 5개 항목 높이로 제한, 내부 스크롤
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 280),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _bjdongResults.length,
+              itemBuilder: (context, index) {
+                final item = _bjdongResults[index];
+                return InkWell(
+                  onTap: () => _selectBjdongAndSearch(item),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_city, size: 18, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _formatFullAddress(item),
+                            style: const TextStyle(fontSize: 14),
+                          ),
                         ),
-                      ),
-                      const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-                    ],
+                        const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                      ],
+                    ),
                   ),
-                ),
-              )),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
