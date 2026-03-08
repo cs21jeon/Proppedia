@@ -25,6 +25,9 @@ class AuthRepository {
 
     // 토큰 저장
     await _tokenStorage.saveAccessToken(response.accessToken!);
+    if (response.refreshToken != null) {
+      await _tokenStorage.saveRefreshToken(response.refreshToken!);
+    }
 
     return response.user!;
   }

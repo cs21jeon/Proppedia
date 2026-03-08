@@ -22,6 +22,7 @@ class AuthResponse with _$AuthResponse {
     required bool success,
     String? message,
     @JsonKey(name: 'access_token') String? accessToken,
+    @JsonKey(name: 'refresh_token') String? refreshToken,
     User? user,
   }) = _AuthResponse;
 

@@ -28,7 +28,7 @@ class PdfGenerator {
 
   // 로고 이미지 캐시
   static Uint8List? _proppediaLogo;
-  static Uint8List? _goldenrabbitLogo;
+  static Uint8List? _propnetLogo;
 
   /// 로고 이미지 로드
   static Future<void> _loadLogos() async {
@@ -40,10 +40,10 @@ class PdfGenerator {
         // 로고 로드 실패 시 무시
       }
     }
-    if (_goldenrabbitLogo == null) {
+    if (_propnetLogo == null) {
       try {
-        final data = await rootBundle.load('assets/images/goldenrabbit_icon.png');
-        _goldenrabbitLogo = data.buffer.asUint8List();
+        final data = await rootBundle.load('assets/images/propnet_icon.png');
+        _propnetLogo = data.buffer.asUint8List();
       } catch (e) {
         // 로고 로드 실패 시 무시
       }
@@ -685,18 +685,13 @@ class PdfGenerator {
             pw.SizedBox(width: 6),
             pw.Text('|', style: _fonts.style(fontSize: 7, color: _colorGray)),
             pw.SizedBox(width: 6),
-            if (_goldenrabbitLogo != null)
-              pw.ClipRRect(
-                horizontalRadius: 2,
-                verticalRadius: 2,
-                child: pw.Image(pw.MemoryImage(_goldenrabbitLogo!), height: 13),
-              ),
-            if (_goldenrabbitLogo != null) pw.SizedBox(width: 4),
+            if (_propnetLogo != null)
+              pw.Image(pw.MemoryImage(_propnetLogo!), height: 13),
+            if (_propnetLogo != null) pw.SizedBox(width: 4),
             pw.Text(
-              '금토끼부동산 제작',
+              '프롭넷 제작',
               style: _fonts.style(fontSize: 7, isBold: true, color: _colorDark),
             ),
-            pw.Text('   https://goldenrabbit.biz', style: _fonts.style(fontSize: 7, color: _colorGray)),
           ],
         ),
       ],

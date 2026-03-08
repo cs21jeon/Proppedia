@@ -2191,3 +2191,203 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 
 ---
 
+### 2026-03-01: 신규 행정구역 토지정보 조회 지원 (v1.0.2+7)
+
+#### 1. VWorld API 대체 조회 로직
+
+**서버 수정** (`vworld_service.py`):
+- `_get_land_characteristics()`: 기존 getLandCharacteristics API
+- `_get_land_from_ladfrl()`: 토지임야대장 API (지목, 면적)
+- `_get_land_use_attr()`: 토지이용계획 API (용도지역)
+- getLandCharacteristics 실패 시 자동 fallback
+
+#### 2. 건물 없는 토지의 도로명주소 표시
+
+- juso.go.kr API를 통한 지번→도로명주소 변환
+- `get_road_address_by_jibun()` 함수 추가 (address_finder_service.py)
+
+#### 3. 법정동 검색 개선
+
+- 정확한 동 이름 매칭 우선 표시 (예: "신동" > 신동읍 > 서신동)
+- 최대 5개 항목 높이 제한 + 내부 스크롤
+- 지번 존재 여부 필터링: juso.go.kr API로 병렬 검증
+
+#### 4. 신규 행정구역 주소 표시 개선
+
+- `_inject_new_district_name()` 함수 추가 (app_api.py)
+- 화성시 동탄구/만세구/효행구/병점구 주소에 구 이름 자동 삽입
+- "화성시동탄구" → "화성시 동탄구" 띄어쓰기 정규화
+
+#### 5. 버그 수정
+
+- Regex 백레퍼런스 버그: `f'\1'` → `r'\1'` raw string 사용
+- 오산동 법정동코드 누락: 4159710400 레코드 추가
+- VWorld 토지 정보 없는 지번: 도로명주소 확인되면 유효한 결과로 인정
+
+#### 빌드 결과
+
+- APK: 76.5MB / AAB: 61.2MB
+- 커밋: `0eb2e73 신규 행정구역 토지정보 조회 지원 (v1.0.2+7)`
+
+---
+
+### 2026-03-05: Google 로그인 및 브랜딩 업데이트 (v1.0.2+8)
+
+#### 1. Google 로그인 기능 (서버 + 앱)
+
+- Google Sign-In → JWT 토큰 발급 인증 플로우 구현
+- 서버: `app_auth.py` 인증 모듈 (Flask Blueprint, port 8000)
+- 앱: AuthProvider, AuthRepository, AuthApi 구현
+- 프로필 화면에 사용자 정보 및 로그아웃 버튼 표시
+
+#### 2. 브랜딩 업데이트
+
+- 앱 정보 다이얼로그: PropNet 아이콘, 설명문, 웹사이트/문의 세로 레이아웃
+- 푸터 리디자인: `[propnet_icon] 프롭넷 | 부동산 종합 서비스` + `© 2026 Propnet`
+- PropNet 브랜드 중심으로 통일
+
+#### 3. 서버
+
+- nginx: `/app/api/auth/` → port 8000, `/app/api/` → port 5000 분리
+- `app_auth.py`: 기존 `app_users` 테이블 스키마 호환
+- 사용자 계정 데이터 마이그레이션 (검색기록 62건, 즐겨찾기 4건, 통계 13건)
+
+#### 빌드 결과
+
+- 커밋: `6564177 Google 로그인 및 브랜딩 업데이트 (v1.0.2+8)`
+
+---
+
+### 2026-03-08: 통합 인증 시스템 구축 및 프로덕션 출시
+
+#### 1. Property Manager 통합 인증 (Phase 0)
+
+**문제**: 로그인은 `app_auth.py`(port 8000)에서 JWT 생성, 즐겨찾기/검색기록은 Property Manager(port 5000)의 `token_required`로 검증 → JWT 시크릿 불일치 → **401 에러**
+
+**해결**: Property Manager에 Google 로그인 엔드포인트 추가, nginx 라우팅 통합
+
+**서버 수정**:
+- `routes/app_auth.py` (Property Manager): `POST /api/auth/google` 추가
+  - `GOOGLE_CLIENT_IDS` 리스트로 Android/Web Client ID 모두 지원
+  - id_token 검증 → `app_users` 테이블 upsert → JWT 발급
+- `services/app_user_service.py`: `create_or_update_google_user()` 메서드 추가
+- nginx: `/app/api/auth/` 라우팅을 port 8000 → port 5000으로 변경
+- `.env`: `DB_HOST=localhost` → `DB_HOST=127.0.0.1` (IPv6 문제 해결)
+- PostgreSQL: `pg_hba.conf` scram-sha-256 → md5 (psycopg2 호환)
+
+**Flutter 수정**:
+- `auth_dto.dart`: `refreshToken` 필드 추가
+- `auth_repository.dart`: refresh_token 저장
+- `auth_interceptor.dart`: 401 시 refresh_token으로 갱신 시도
+- `auth_provider.dart`: `serverClientId` 웹/모바일 분기, `processGoogleAccount()` 추가
+- `login_screen.dart`: 웹 `renderButton` / 모바일 커스텀 버튼 분기
+
+#### 2. 이메일/비밀번호 로그인 제거 → Google 로그인 전용
+
+**PWA 웹앱 수정** (서버):
+- `/app/login.html`: 이메일/비밀번호 폼, 회원가입 탭 제거 → Google Sign-In 버튼만 배치
+  - Google Identity Services (`google.accounts.id.initialize()` + `renderButton()`) 사용
+  - Propedia Web Client ID: `846392940969-sv2936v0tm85j8hvdn3srcmtei1kk25e`
+- `/app/profile.html`: 비밀번호 변경 버튼/모달 제거
+  - 회원 탈퇴: 비밀번호 입력 → 2단계 확인(confirm) 방식으로 변경
+
+#### 3. 정리 작업
+
+- `backend/api/app_user.py` 삭제 (불필요)
+- `backend/api/app.py`에서 `app_user_bp` 참조 제거
+- `backend/api/app_auth.py` 디버그 로깅 제거
+
+#### 4. Google Cloud Console 설정
+
+- Propedia Web Client ID 생성: `846392940969-sv2936v0tm85j8hvdn3srcmtei1kk25e`
+- OAuth 동의 화면: 테스트 → 프로덕션 전환
+- People API 활성화
+
+#### 5. Google Play Store 프로덕션 출시
+
+- v1.0.2+8 (빌드 번호 8) AAB 업로드
+- 프로덕션 트랙 출시 → Google 검토 통과 → **게시 완료**
+
+#### 빌드 결과
+
+- APK: 76.5MB / AAB: 61.3MB
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `auth_dto.dart` | refreshToken 필드 추가 |
+| `auth_repository.dart` | refresh_token 저장 |
+| `auth_interceptor.dart` | refresh token 갱신 로직 |
+| `auth_provider.dart` | serverClientId 분기, processGoogleAccount |
+| `login_screen.dart` | 웹 renderButton / 모바일 버튼 분기 |
+| `web/index.html` | google-signin-client_id 메타 태그 추가 |
+| 서버 `routes/app_auth.py` | Google 로그인 엔드포인트 |
+| 서버 `services/app_user_service.py` | create_or_update_google_user |
+| 서버 nginx 설정 | /app/api/auth/ → port 5000 |
+| PWA `login.html` | Google 로그인 전용으로 변경 |
+| PWA `profile.html` | 비밀번호 변경 기능 제거 |
+
+---
+
+## 업데이트 이력 (CHANGELOG)
+
+> 아래는 버전별 변경 이력 요약입니다. 상세 내용은 위 개발일지를 참조하세요.
+
+### [1.0.2+8] - 2026-03-05 ~ 2026-03-08
+
+- **Google 로그인** 전환 (이메일/비밀번호 제거)
+- **통합 인증 시스템**: Property Manager에 Google 로그인 엔드포인트 통합
+- JWT 시크릿 통일로 즐겨찾기/검색기록 401 에러 해결
+- Refresh token 지원 (access 24h + refresh 30d)
+- PWA 웹앱: Google Sign-In 전용 로그인, 비밀번호 변경 기능 제거
+- PropNet 브랜딩 업데이트
+- **Google Play Store 프로덕션 출시**
+
+### [1.0.2+7] - 2026-03-01
+
+- 신규 행정구역 토지정보 조회 지원 (VWorld API fallback)
+- 건물 없는 토지 도로명주소 표시
+- 법정동 검색 정렬/필터링 개선
+- 신규 행정구역 주소 자동 보정
+
+### [1.0.2+6] - 2026-02-26
+
+- 스켈레톤 로딩 UI 및 단계별 진행 메시지
+- API 타임아웃 60초, 에러 화면 개선
+- 화성시 신규 행정구역 25개동 old_bjdong_code 매핑
+
+### [1.0.2+5] - 2026-02-25
+
+- API 병렬 호출, 건축물대장 TTL 캐싱
+- VWorld API 호출 최적화
+- PWA 앱 Flutter 앱과 동기화
+
+### [1.0.2+4] - 2026-02-24
+
+- VWorld API TTL 캐싱 (토지 24h, 공시가격 7d)
+- 신규 행정구역 검색 오류 수정 (구/신 법정동코드 분리)
+
+### [1.0.2+3] - 2026-02-23
+
+- 대규모 아파트 지원 (최대 20,000세대)
+- 대지지분 조회 속도 개선 (3분 → 30초)
+
+### [1.0.2+2] - 2026-02-19
+
+- 지번 검색 UX 개선, 버튼 클릭 방식 변경
+
+### [1.0.2+1] - 2026-02-19
+
+- 로그인 필수 기능 강화, 지번 검색 UX 개선
+
+### [1.0.1] - 2026-02-18
+
+- 초기 릴리즈 (도로명/지번/지도 검색, 토지/건물 조회, PDF, 즐겨찾기)
+
+### 버전 형식
+
+`X.Y.Z+N` - Major.Minor.Patch+BuildNumber
+
+---
+

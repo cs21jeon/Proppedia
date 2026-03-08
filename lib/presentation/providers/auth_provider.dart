@@ -71,8 +71,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '846392940969-a7k37gkon1p451mlnhp0oj9qaok1d8o1.apps.googleusercontent.com',
+    serverClientId: kIsWeb
+        ? null
+        : '846392940969-a7k37gkon1p451mlnhp0oj9qaok1d8o1.apps.googleusercontent.com',
   );
+
+  /// 웹에서 renderButton 사용을 위해 GoogleSignIn 인스턴스 노출
+  GoogleSignIn get googleSignIn => _googleSignIn;
 
   AuthNotifier(this._authRepository) : super(const AuthState());
 
@@ -95,12 +100,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Google 로그인
+  /// 웹: Google 계정 처리 (renderButton 콜백)
+  Future<void> processGoogleAccount(GoogleSignInAccount account) async {
+    state = state.copyWith(status: AuthStatus.loading);
+    try {
+      debugPrint('[AUTH] 웹 Google 계정: ${account.email}');
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      debugPrint('[AUTH] idToken: ${idToken != null ? '${idToken.substring(0, 20)}...' : 'null'}');
+
+      if (idToken == null) {
+        throw Exception('Google ID Token을 가져올 수 없습니다');
+      }
+
+      debugPrint('[AUTH] 서버 로그인 요청 중...');
+      final user = await _authRepository.loginWithGoogle(idToken: idToken);
+      debugPrint('[AUTH] 로그인 성공: ${user.email} (${user.name})');
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+    } catch (e, stack) {
+      debugPrint('[AUTH] 로그인 에러: $e');
+      debugPrint('[AUTH] 스택: $stack');
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+    }
+  }
+
+  /// Google 로그인 (모바일)
   Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
       debugPrint('[AUTH] Google 로그인 시작...');
+      // 캐시된 만료 토큰 방지: 기존 세션 클리어 후 새로 로그인
+      await _googleSignIn.signOut();
       final account = await _googleSignIn.signIn();
       if (account == null) {
         debugPrint('[AUTH] Google 로그인 취소됨');

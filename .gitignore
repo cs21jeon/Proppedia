@@ -2,6 +2,9 @@
 .claude/
 .mcp.json
 
+# Temp files
+temp_*
+
 # Environment variables
 .env
 *.env.local

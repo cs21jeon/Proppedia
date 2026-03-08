@@ -167,6 +167,8 @@ mixin _$AuthResponse {
   String? get message => throw _privateConstructorUsedError;
   @JsonKey(name: 'access_token')
   String? get accessToken => throw _privateConstructorUsedError;
+  @JsonKey(name: 'refresh_token')
+  String? get refreshToken => throw _privateConstructorUsedError;
   User? get user => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -185,6 +187,7 @@ abstract class $AuthResponseCopyWith<$Res> {
       {bool success,
       String? message,
       @JsonKey(name: 'access_token') String? accessToken,
+      @JsonKey(name: 'refresh_token') String? refreshToken,
       User? user});
 
   $UserCopyWith<$Res>? get user;
@@ -206,6 +209,7 @@ class _$AuthResponseCopyWithImpl<$Res, $Val extends AuthResponse>
     Object? success = null,
     Object? message = freezed,
     Object? accessToken = freezed,
+    Object? refreshToken = freezed,
     Object? user = freezed,
   }) {
     return _then(_value.copyWith(
@@ -220,6 +224,10 @@ class _$AuthResponseCopyWithImpl<$Res, $Val extends AuthResponse>
       accessToken: freezed == accessToken
           ? _value.accessToken
           : accessToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      refreshToken: freezed == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
               as String?,
       user: freezed == user
           ? _value.user
@@ -253,6 +261,7 @@ abstract class _$$AuthResponseImplCopyWith<$Res>
       {bool success,
       String? message,
       @JsonKey(name: 'access_token') String? accessToken,
+      @JsonKey(name: 'refresh_token') String? refreshToken,
       User? user});
 
   @override
@@ -273,6 +282,7 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
     Object? success = null,
     Object? message = freezed,
     Object? accessToken = freezed,
+    Object? refreshToken = freezed,
     Object? user = freezed,
   }) {
     return _then(_$AuthResponseImpl(
@@ -287,6 +297,10 @@ class __$$AuthResponseImplCopyWithImpl<$Res>
       accessToken: freezed == accessToken
           ? _value.accessToken
           : accessToken // ignore: cast_nullable_to_non_nullable
+              as String?,
+      refreshToken: freezed == refreshToken
+          ? _value.refreshToken
+          : refreshToken // ignore: cast_nullable_to_non_nullable
               as String?,
       user: freezed == user
           ? _value.user
@@ -303,6 +317,7 @@ class _$AuthResponseImpl implements _AuthResponse {
       {required this.success,
       this.message,
       @JsonKey(name: 'access_token') this.accessToken,
+      @JsonKey(name: 'refresh_token') this.refreshToken,
       this.user});
 
   factory _$AuthResponseImpl.fromJson(Map<String, dynamic> json) =>
@@ -316,11 +331,14 @@ class _$AuthResponseImpl implements _AuthResponse {
   @JsonKey(name: 'access_token')
   final String? accessToken;
   @override
+  @JsonKey(name: 'refresh_token')
+  final String? refreshToken;
+  @override
   final User? user;
 
   @override
   String toString() {
-    return 'AuthResponse(success: $success, message: $message, accessToken: $accessToken, user: $user)';
+    return 'AuthResponse(success: $success, message: $message, accessToken: $accessToken, refreshToken: $refreshToken, user: $user)';
   }
 
   @override
@@ -332,13 +350,15 @@ class _$AuthResponseImpl implements _AuthResponse {
             (identical(other.message, message) || other.message == message) &&
             (identical(other.accessToken, accessToken) ||
                 other.accessToken == accessToken) &&
+            (identical(other.refreshToken, refreshToken) ||
+                other.refreshToken == refreshToken) &&
             (identical(other.user, user) || other.user == user));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, success, message, accessToken, user);
+  int get hashCode => Object.hash(
+      runtimeType, success, message, accessToken, refreshToken, user);
 
   @JsonKey(ignore: true)
   @override
@@ -359,6 +379,7 @@ abstract class _AuthResponse implements AuthResponse {
       {required final bool success,
       final String? message,
       @JsonKey(name: 'access_token') final String? accessToken,
+      @JsonKey(name: 'refresh_token') final String? refreshToken,
       final User? user}) = _$AuthResponseImpl;
 
   factory _AuthResponse.fromJson(Map<String, dynamic> json) =
@@ -371,6 +392,9 @@ abstract class _AuthResponse implements AuthResponse {
   @override
   @JsonKey(name: 'access_token')
   String? get accessToken;
+  @override
+  @JsonKey(name: 'refresh_token')
+  String? get refreshToken;
   @override
   User? get user;
   @override
