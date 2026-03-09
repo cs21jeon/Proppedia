@@ -370,10 +370,32 @@ ca-app-pub-3940256099942544/6300978111
 
 | 용도 | Client ID | 비고 |
 |------|-----------|------|
-| Web (서버 검증용/serverClientId) | `...a7k37gkon1p451mlnhp0oj9qaok1d8o1` | Flutter serverClientId (모바일) |
-| Propedia Web | `...sv2936v0tm85j8hvdn3srcmtei1kk25e` | PWA/Flutter Web 로그인 |
-| Android Debug | `...g2afoiuc6m7kp64vp4fdo48rp2iqkt30` | debug SHA-1 |
-| Android Release | `...1sdp4mc01gbsq2dgne4h8mnuvobi5644` | release SHA-1 |
+| Proptalk Web (서버 검증용) | `...a7k37gkon1p451mlnhp0oj9qaok1d8o1` | Proptalk/Propedia 모바일 serverClientId |
+| Proppedia Web | `...sv2936v0tm85j8hvdn3srcmtei1kk25e` | PWA/Flutter Web 로그인, Dashboard OAuth |
+| Propsheet Web | `...h70f1cqg6o97s526upn7gb5mqcnqmdsb` | Propsheet 웹 로그인 |
+| Android Debug | `...g2afoiuc6m7kp64vp4fdo48rp2iqkt30` | 로컬 디버그 빌드용 |
+| Android Release | `...1sdp4mc01gbsq2dgne4h8mnuvobi5644` | Play Store 배포용 |
+| Proptalk Android | `...ro1j...` | Proptalk 앱용 |
+
+### Android 서명 키 & SHA-1
+
+| 키 종류 | SHA-1 | 용도 |
+|--------|-------|------|
+| 업로드 키 | `A2:E8:12:01:77:14:2E:E9:9B:13:7A:F0:B4:BB:66:92:D8:08:87:74` | 개발자가 AAB 서명 시 사용 |
+| Play App Signing 키 | `37:3F:EA:3D:4E:D6:2A:A2:A6:AC:7C:7F:11:E1:D1:77:FB:A3:F0:74` | Google Play가 APK 배포 시 재서명 |
+
+> **중요**: Play Store에서 다운로드한 앱은 **Play App Signing 키**로 서명됩니다.
+> Google Cloud Console의 Android Release Client ID에는 **Play App Signing 키의 SHA-1**을 등록해야 합니다.
+> 업로드 키의 SHA-1만 등록하면 Play Store 배포 앱에서 Google 로그인이 실패합니다.
+>
+> **SHA-1 확인 방법**:
+> - Play App Signing 키: Google Play Console → 앱 선택 → **앱 무결성** → 앱 서명 탭
+> - 업로드 키: `keytool -keystore android/app/propedia-release-key.jks -list -v`
+>
+> **인증서 지문 종류** (같은 키에서 해시 알고리즘만 다름):
+> - MD5: 128비트 (거의 미사용)
+> - SHA-1: 160비트 (**Google Cloud Console에서 사용**)
+> - SHA-256: 256비트 (앱 링크 등에서 사용)
 
 ### OAuth 동의 화면
 - **앱 이름**: Proppedia 부동산백과
@@ -382,10 +404,29 @@ ca-app-pub-3940256099942544/6300978111
 
 ### 인증 플로우
 ```
-[모바일] Google Sign-In SDK → id_token → 서버 검증 → JWT 발급
-[PWA 웹] Google Identity Services → id_token → 서버 검증 → JWT 발급
+[모바일 앱] Google Sign-In SDK → id_token → 서버 검증 (GOOGLE_CLIENT_IDS) → JWT 발급
+[PWA 웹]   Google Identity Services → id_token → 서버 검증 → JWT 발급
+[Dashboard] Google OAuth 웹 플로우 (리다이렉트) → 세션 로그인 (관리자만)
 [JWT] access_token (24h) + refresh_token (30d)
 ```
+
+### 서버 환경변수 (.env)
+```
+# Propsheet Web OAuth
+GOOGLE_OAUTH_CLIENT_ID=846392940969-h70f...
+GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-Bhca...
+
+# Proppedia Web OAuth (Dashboard)
+PROPPEDIA_OAUTH_CLIENT_ID=846392940969-sv29...
+PROPPEDIA_OAUTH_CLIENT_SECRET=GOCSPX-B8vj...
+```
+
+### 신규 앱 출시 시 Google 로그인 체크리스트
+1. Google Cloud 프로젝트에서 Android Client ID 생성 (패키지명 + 업로드 키 SHA-1)
+2. 비공개 테스트 진행 (업로드 키로 서명되므로 로그인 정상)
+3. **프로덕션 출시 후**: Play Console → 앱 무결성 → Play App Signing 키 SHA-1 확인
+4. Google Cloud Console → Android Release Client ID의 SHA-1을 **Play App Signing 키로 변경**
+5. 적용까지 최대 수 시간 소요
 
 ---
 

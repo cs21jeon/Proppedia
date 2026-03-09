@@ -322,8 +322,15 @@
             display: flex;
             gap: 20px;
             overflow-x: auto;
-            padding: 20px 0;
+            padding: 20px 20px;
             scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .screenshots-gallery::before,
+        .screenshots-gallery::after {
+            content: '';
+            flex: 0 0 1px;
         }
 
         .screenshot-item {
@@ -489,6 +496,34 @@
             font-size: 0.85rem;
         }
 
+        /* Header Buttons */
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn-outline {
+            background: transparent !important;
+            color: var(--primary-color) !important;
+            border: 1.5px solid var(--primary-color) !important;
+            white-space: nowrap;
+        }
+
+        .header-btn-filled {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .header-buttons .header-cta {
+                flex: 1;
+                text-align: center;
+                padding: 8px 10px;
+                font-size: 0.85rem;
+                min-width: 0;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 968px) {
             .hero-content {
@@ -589,9 +624,17 @@
                     <span class="subtitle">부동산백과</span>
                 </div>
             </a>
-            <a href="/app/" class="header-cta">
-                웹에서 체험하기
-            </a>
+            <div class="header-buttons">
+                <a href="/proppedia/guide/" class="header-cta header-btn-outline">
+                    사용가이드
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=com.proppedia.app" class="header-cta mobile-only header-btn-filled">
+                    다운로드
+                </a>
+                <a href="/app/" class="header-cta pc-only header-btn-filled">
+                    웹에서 체험하기
+                </a>
+            </div>
         </div>
     </header>
 
@@ -609,24 +652,28 @@
                 </p>
                 <!-- PC 사용자 -->
                 <div class="pc-only">
-                    <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
-                        💻 웹에서 바로 시작하기
-                    </a>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                            💻 웹에서 바로 시작하기
+                        </a>
+                        <a href="#download" style="display: inline-flex; align-items: center; gap: 8px; background: transparent; color: #2196F3; border: 2px solid #2196F3; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
+                            📱 앱 다운로드
+                        </a>
+                    </div>
                     <p style="margin-top: 12px; color: #757575; font-size: 0.9rem;">PC에서는 웹 버전을 이용해주세요</p>
                 </div>
 
                 <!-- 모바일 사용자 -->
                 <div class="mobile-only" style="display: none;">
                     <div class="hero-badges">
-                        <div style="background: #FF9800; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
-                            📱 곧 앱 출시 예정
-                        </div>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: #2196F3; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem;">
-                            🌐 웹에서 먼저 체험하기
+                        <a href="https://play.google.com/store/apps/details?id=com.proppedia.app">
+                            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 다운로드" class="play-badge">
                         </a>
-                        <p style="margin-top: 12px; color: #757575; font-size: 0.9rem;">설치 없이 브라우저에서 바로 체험하세요</p>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <a href="/app/" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(33,150,243,0.15); color: #1976D2; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                            🌐 웹에서 체험하기
+                        </a>
                     </div>
                 </div>
             </div>
@@ -702,7 +749,7 @@
                 <h2>앱 미리보기</h2>
                 <p>직관적인 UI로 쉽게 사용하세요</p>
             </div>
-            <div class="screenshots-gallery" style="justify-content: center;">
+            <div class="screenshots-gallery">
                 <div class="screenshot-item">
                     <img src="screenshots/01_home.png" alt="홈 화면" loading="lazy">
                     <p>홈 화면</p>
@@ -738,7 +785,7 @@
                 <h2>편리한 부가 기능</h2>
                 <p>회원가입/로그인을 통해 더 편리하게 이용하세요</p>
             </div>
-            <div class="screenshots-gallery" style="justify-content: center;">
+            <div class="screenshots-gallery">
                 <div class="screenshot-item">
                     <img src="screenshots/07_history.png" alt="검색 기록" loading="lazy">
                     <p>검색 기록</p>
@@ -751,41 +798,46 @@
                     <img src="screenshots/KakaoTalk_20260221_232554552.jpg" alt="PDF 저장" loading="lazy">
                     <p>PDF 저장 (모바일)</p>
                 </div>
-            </div>
-            <!-- PDF 미리보기 (가로 이미지) -->
-            <div style="margin-top: 40px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-start;">
-                <div style="max-width: 500px;">
-                    <img src="screenshots/print pdf 002.png" alt="PDF 결과물" loading="lazy" style="width: 100%; height: 280px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #f5f5f5;">
-                    <p style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">PDF 결과물 미리보기</p>
+                <div class="screenshot-item" style="width: 340px;">
+                    <img src="screenshots/print pdf 002.png" alt="PDF 결과물" loading="lazy" style="height: 280px; object-fit: contain; background: #f5f5f5;">
+                    <p>PDF 결과물 미리보기</p>
                 </div>
-                <div style="max-width: 500px;">
-                    <img src="screenshots/print pdf 001.png" alt="PDF 인쇄/저장" loading="lazy" style="width: 100%; height: 280px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); background: #f5f5f5;">
-                    <p style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);">PDF 인쇄/저장 (PC)</p>
+                <div class="screenshot-item" style="width: 340px;">
+                    <img src="screenshots/print pdf 001.png" alt="PDF 인쇄/저장" loading="lazy" style="height: 280px; object-fit: contain; background: #f5f5f5;">
+                    <p>PDF 인쇄/저장 (PC)</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta">
+    <section class="cta" id="download">
         <div class="cta-content">
             <h2>지금 바로 시작하세요</h2>
 
             <!-- PC 사용자 -->
             <div class="pc-only">
-                <p>PC에서는 웹 버전을 이용해주세요</p>
-                <a href="/app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 10px;">
+                <p>스마트폰으로 QR 코드를 스캔하여 앱을 다운로드하세요</p>
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.proppedia.app" alt="Google Play 다운로드 QR 코드">
+                    <p>Google Play에서 다운로드</p>
+                </div>
+                <a href="/app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 20px;">
                     💻 웹에서 바로 시작하기
                 </a>
             </div>
 
             <!-- 모바일 사용자 -->
             <div class="mobile-only" style="display: none;">
-                <p>설치 없이 웹에서 바로 체험해 보세요</p>
-                <a href="/app/" style="display: inline-block; background: white; color: #1976D2; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-top: 10px;">
-                    🌐 웹에서 먼저 체험하기
+                <p>Google Play에서 무료로 다운로드하세요</p>
+                <a href="https://play.google.com/store/apps/details?id=com.proppedia.app" style="display: inline-block; margin-top: 10px;">
+                    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 다운로드" style="height: 70px;">
                 </a>
-                <p style="margin-top: 20px; font-size: 0.95rem; opacity: 0.9;">📱 앱은 곧 Google Play에서 만나보실 수 있습니다</p>
+                <div style="margin-top: 15px;">
+                    <a href="/app/" style="display: inline-block; background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">
+                        🌐 웹에서 체험하기
+                    </a>
+                </div>
             </div>
         </div>
     </section>
@@ -794,7 +846,7 @@
     <footer>
         <div class="footer-content">
             <div class="footer-brand">
-                <h3>금토끼부동산</h3>
+                <h3>프롭넷 (PropNet)</h3>
                 <p>
                     부동산 정보를 더 쉽고 편리하게 제공합니다.<br>
                     문의: cs21.jeon@gmail.com
@@ -806,6 +858,7 @@
                     <li><a href="#features">주요 기능</a></li>
                     <li><a href="#search">검색 방식</a></li>
                     <li><a href="#screenshots">앱 미리보기</a></li>
+                    <li><a href="/proppedia/guide/">사용 가이드</a></li>
                 </ul>
             </div>
             <div class="footer-links">
@@ -817,7 +870,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 금토끼부동산. All rights reserved.</p>
+            <p>&copy; 2026 프롭넷 (PropNet). All rights reserved.</p>
         </div>
     </footer>
 </body>

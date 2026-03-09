@@ -2330,9 +2330,75 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 
 ---
 
+### 2026-03-09: 웹 페이지 반응형 레이아웃 전환
+
+모바일 앱 전용으로 설계된 `/app/` 및 루트(`/`) 웹 페이지를 데스크탑 브라우저에서도 적절히 표시되도록 반응형 레이아웃으로 전환. CSS 클래스(Tailwind)만 변경하여 기능 변경 없음.
+
+#### 1. /app/ 페이지 반응형 전환 (10개 HTML)
+
+- 모든 페이지의 `max-w-md` (448px) → `max-w-md md:max-w-3xl` (768px+에서 768px)
+- result.html, search-map.html은 데이터 테이블/지도용으로 `md:max-w-4xl` 적용
+- 하단 nav의 `pb-8` → `pb-8 md:pb-2` (데스크탑에서 불필요한 여백 제거)
+- index.html 검색 카드: `flex flex-col` → `md:grid md:grid-cols-3` (데스크탑 3열 그리드)
+- search-map.html 지도 높이: `h-[500px]` → `h-[500px] md:h-[600px]`
+
+| 파일 | max-width | 비고 |
+|------|-----------|------|
+| `index.html` | md:max-w-3xl | 검색 카드 3열 그리드 |
+| `search-road.html` | md:max-w-3xl | |
+| `search-jibun.html` | md:max-w-3xl | |
+| `history.html` | md:max-w-3xl | |
+| `favorites.html` | md:max-w-3xl | |
+| `profile.html` | md:max-w-3xl | |
+| `login.html` | md:max-w-3xl | nav 없음 |
+| `about.html` | md:max-w-3xl | nav 없음 |
+| `result.html` | md:max-w-4xl | 데이터 테이블용 넓은 폭 |
+| `search-map.html` | md:max-w-4xl | 지도 높이 600px |
+
+#### 2. about.html 브랜딩 업데이트
+
+- 운영사: `금토끼부동산` → `프롭넷 (Propnet)`
+- 영문명 행 제거
+- Copyright: `© 2024 금토끼부동산` → `© 2026 프롭넷 (PropNet)`
+- 푸터: `© 2026 프롭넷 (PropNet). All rights reserved.`
+
+#### 3. 개인정보처리방침/이용약관 페이지 복사
+
+- `/privacy-policy.html` → `/app/privacy-policy.html` 복사
+- `/terms-of-service.html` → `/app/terms-of-service.html` 복사
+- 파비콘: `/proppedia/favicon.png` (Proppedia 전용)
+- 브랜딩: `골든래빗` → `프롭넷`, 타이틀 `부동산백과 Proppedia`
+- about.html 링크: `/privacy-policy.html` → `/app/privacy-policy.html` 등으로 변경
+
+#### 4. 루트 페이지 (goldenrabbit.biz/) 반응형 전환
+
+- `max-w-lg` (512px) → `max-w-lg md:max-w-3xl`
+- 지도 높이: `h-[480px] md:h-[580px]`, 검색결과 지도: `h-[420px] md:h-[520px]`
+- 매물 목록: `flex flex-col` → `grid grid-cols-1 md:grid-cols-2` (데스크탑 2열)
+- 매물 상세 모달: `max-w-lg` 유지, 이미지 `max-h-[400px] object-cover`
+
+#### 수정 파일 요약
+
+| 파일 | 주요 변경 |
+|------|----------|
+| PWA `/app/*.html` (10개) | max-w-md → max-w-md md:max-w-3xl/4xl 반응형 |
+| PWA `/app/about.html` | 프롭넷 브랜딩 업데이트 |
+| PWA `/app/privacy-policy.html` | 신규 (루트에서 복사, 브랜딩 변경) |
+| PWA `/app/terms-of-service.html` | 신규 (루트에서 복사, 브랜딩 변경) |
+| 루트 `/index.html` | max-w-lg → max-w-lg md:max-w-3xl 반응형 |
+
+---
+
 ## 업데이트 이력 (CHANGELOG)
 
 > 아래는 버전별 변경 이력 요약입니다. 상세 내용은 위 개발일지를 참조하세요.
+
+### 웹 반응형 전환 - 2026-03-09
+
+- `/app/` 전체 10개 페이지 반응형 레이아웃 전환 (CSS만 변경, 기능 변경 없음)
+- 루트 페이지(`/`) 반응형 레이아웃 전환
+- about.html 프롭넷 브랜딩 업데이트
+- `/app/` 전용 개인정보처리방침/이용약관 페이지 추가
 
 ### [1.0.2+8] - 2026-03-05 ~ 2026-03-08
 
