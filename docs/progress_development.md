@@ -2411,6 +2411,8 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
   - 공지 유형: error(API 오류), maintenance(점검), info(안내)
   - "오늘 하루 안보기" 기능 (SharedPreferences / localStorage)
   - 홈화면 진입 시 + 30분 주기 자동 공지 확인
+- `/test` 명령에 **보안 취약점 검사** 통합 (시크릿 탐지, Android 보안, 의존성, SQL 인젝션)
+- 릴리즈 프로세스 개선: CHANGELOG → progress_development.md 통합
 
 ### [1.0.2+8] - 2026-03-05 ~ 2026-03-08
 

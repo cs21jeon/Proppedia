@@ -99,15 +99,15 @@ Run `dart run build_runner build --delete-conflicting-outputs` to regenerate `.g
 
 ### 슬래시 명령어
 - `/release` - 전체 릴리즈 워크플로우 (테스트 → 빌드 → 커밋)
-- `/test` - 코드 분석 및 테스트 실행
+- `/test` - 코드 분석, 보안 검사 및 API 테스트
 - `/build` - APK/AAB 빌드
 - `/deploy` - 서버 배포
 
 ### 릴리즈 프로세스
 1. 코드 수정 완료
-2. `/test` 실행하여 오류 확인
-3. 오류 있으면 수정 후 재테스트
-4. `docs/CHANGELOG.md` 업데이트
+2. `/test` 실행 (코드 분석 + 보안 검사 + API 테스트)
+3. 오류/취약점 있으면 수정 후 재테스트
+4. `docs/progress_development.md` 변경 이력 업데이트
 5. `pubspec.yaml` 버전 업데이트
 6. `/build` 실행하여 APK/AAB 생성
 7. 커밋 및 푸시
@@ -116,11 +116,19 @@ Run `dart run build_runner build --delete-conflicting-outputs` to regenerate `.g
 ### 버전 관리
 - 버전 형식: `X.Y.Z+N` (Major.Minor.Patch+BuildNumber)
 - 빌드 번호는 Play Store 업로드마다 증가
-- 변경 이력: `docs/CHANGELOG.md`
+- 변경 이력: `docs/progress_development.md`
 
 ### 빌드 파일 위치
 - APK: `build/app/outputs/flutter-apk/app-release.apk`
 - AAB: `build/app/outputs/bundle/release/app-release.aab`
+
+## Blog Writing
+
+블로그 글 작성 요청 시 반드시 `blog_sample/my-writing-style.md` 문체 가이드를 참고합니다.
+- 문체 가이드 위치: `blog_sample/my-writing-style.md`
+- 블로그 콘텐츠 위치: `marketing/blog-content/`
+- 발행은 Playwright MCP를 통해 네이버 블로그에 진행
+- 카테고리: 게시판(1), 부동산 상식(2), 활용 팁(3), 서비스 가이드(4), 부동산 데이터(5), PropTech 이야기(6)
 
 ## Server Information
 

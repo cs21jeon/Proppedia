@@ -8,6 +8,7 @@
 | https://goldenrabbit.biz/proppedia/ | 앱 소개 랜딩 페이지 | ✅ 완료 |
 | https://goldenrabbit.biz/robots.txt | 크롤링 규칙 | ✅ 완료 |
 | https://goldenrabbit.biz/sitemap.xml | 사이트맵 | ✅ 완료 |
+| https://goldenrabbit.biz/app-ads.txt | AdMob app-ads.txt (광고 인증) | ✅ 완료 (2026-03-10) |
 
 ### 랜딩 페이지 업데이트 이력
 
@@ -34,6 +35,7 @@ marketing/
 │   └── 02-공시지가-조회하기.md
 ├── robots.txt              # 검색 엔진 크롤링 규칙
 ├── sitemap.xml             # 사이트맵
+├── app-ads.txt             # AdMob app-ads.txt (광고 인증)
 ├── deploy.ps1              # PowerShell 배포 스크립트
 └── deploy.sh               # Bash 배포 스크립트
 

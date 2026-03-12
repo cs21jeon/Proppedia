@@ -46,6 +46,19 @@
 ### AdMob App ID
 - **앱 ID**: `ca-app-pub-3478991909223100~4421163836`
 
+### app-ads.txt 설정 (2026-03-10)
+- **파일 위치**: `marketing/app-ads.txt`
+- **서버 경로**: `/home/webapp/goldenrabbit/frontend/public/app-ads.txt`
+- **URL**: `https://goldenrabbit.biz/app-ads.txt`
+- **내용**: `google.com, pub-3478991909223100, DIRECT, f08c47fec0942fa0`
+- **배포**: ✅ 완료 (2026-03-10)
+
+### AdMob 앱 인증 상태 (2026-03-10)
+- [x] Google Play Store 연결 (스토어 추가)
+- [x] app-ads.txt 파일 생성 및 서버 배포
+- [ ] AdMob 앱 인증 완료 (app-ads.txt 크롤링 후 자동 처리, 최대 24시간)
+- [ ] 광고 게재 제한 해제
+
 ---
 
 ## 3. Flutter 앱 연동 상태
