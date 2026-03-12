@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,9 +7,11 @@ import 'package:propedia/core/constants/app_colors.dart';
 import 'package:propedia/presentation/providers/auth_provider.dart';
 import 'package:propedia/presentation/providers/history_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
+import 'package:propedia/presentation/providers/notice_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 import 'package:propedia/presentation/widgets/common/app_drawer.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
+import 'package:propedia/presentation/widgets/common/notice_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +21,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Timer? _noticeTimer;
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +30,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+    // 30분 주기로 공지 재확인
+    _noticeTimer = Timer.periodic(const Duration(minutes: 30), (_) {
+      ref.read(noticeProvider.notifier).fetchNotices();
+    });
+  }
+
+  @override
+  void dispose() {
+    _noticeTimer?.cancel();
+    super.dispose();
   }
 
   void _loadData() {
@@ -39,10 +54,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ref.read(historyProvider.notifier).syncFromServer();
       ref.read(favoritesProvider.notifier).syncFromServer();
     }
+
+    // 공지사항 확인
+    ref.read(noticeProvider.notifier).fetchNotices();
   }
 
   @override
   Widget build(BuildContext context) {
+    // 공지사항 표시
+    ref.listen<NoticeState>(noticeProvider, (previous, next) {
+      if (!next.isLoading && !next.hasShown && next.visibleNotices.isNotEmpty) {
+        ref.read(noticeProvider.notifier).markShown();
+        final notice = next.visibleNotices.first;
+        NoticeDialog.show(
+          context,
+          notice: notice,
+          onDismiss: () =>
+              ref.read(noticeProvider.notifier).dismissNotice(notice.id),
+          onDismissForToday: notice.isDismissible
+              ? () => ref.read(noticeProvider.notifier).dismissForToday(notice.id)
+              : null,
+        );
+      }
+    });
+
     // 로그인 상태 변경 감지
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (previous?.status != next.status) {

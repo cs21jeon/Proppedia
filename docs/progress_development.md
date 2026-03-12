@@ -2400,6 +2400,18 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 - about.html 프롭넷 브랜딩 업데이트
 - `/app/` 전용 개인정보처리방침/이용약관 페이지 추가
 
+### [1.0.2+9] - 2026-03-12
+
+- **공지사항 팝업 시스템** 구현
+  - 백엔드: `app_notices` DB 테이블, CRUD 서비스(`app_notice_service.py`)
+  - 관리자 대시보드: 공지 등록/게시/중지/삭제/기간설정 UI 추가
+  - API: `GET /app/api/notices` (공개), 관리자 CRUD 6개 엔드포인트
+  - Flutter 앱: NoticeDto, NoticeApi, NoticeProvider, NoticeDialog
+  - PWA 웹: `notice-popup.js` - 전 페이지 공지 팝업 지원
+  - 공지 유형: error(API 오류), maintenance(점검), info(안내)
+  - "오늘 하루 안보기" 기능 (SharedPreferences / localStorage)
+  - 홈화면 진입 시 + 30분 주기 자동 공지 확인
+
 ### [1.0.2+8] - 2026-03-05 ~ 2026-03-08
 
 - **Google 로그인** 전환 (이메일/비밀번호 제거)

@@ -1,535 +1,352 @@
 # GoldenRabbit 서비스 아키텍처 정리
 
 > 작성일: 2026-02-11
-> 최종 업데이트: 2026-02-23
+> 최종 업데이트: 2026-03-12
 
 ## 개요
 
-GoldenRabbit는 부동산 정보 관리 및 조회를 위한 통합 플랫폼입니다. 총 5개의 주요 서비스로 구성되어 있으며, 각 서비스는 독립적으로 운영되면서도 데이터와 인프라를 공유합니다.
+GoldenRabbit는 부동산 정보 관리 및 조회를 위한 통합 플랫폼입니다.
+단일 서버(`175.119.224.71`, 도메인 `goldenrabbit.biz`)에서 운영되며,
+Nginx 리버스 프록시 뒤에 **3개 Systemd 서비스 + 1개 PM2 프로세스**가 동작합니다.
 
 ### 서비스 목록
 
 1. **금토끼부동산 웹페이지** - 메인 공개 홈페이지
-2. **부동산정보조회 웹서비스** - 관리자용 Property Manager
-3. **부동산정보조회 웹앱서비스** - 일반 사용자용 PWA 앱
-4. **부동산데이터관리 시스템 (PropSheet)** - 워크스페이스 기반 데이터베이스 관리
-5. **Threads 뉴스레터 발행** - 자동화된 부동산 뉴스 큐레이션
+2. **부동산정보조회 웹서비스 (Property Manager)** - 관리자용
+3. **Propedia 앱 (Flutter)** - 일반 사용자용 모바일/웹 앱
+4. **부동산데이터관리 (PropSheet)** - 워크스페이스 기반 데이터베이스 관리
+5. **쇼츠 자동화** - 부동산 쇼츠 영상 자동 생성
+6. **PropTalk / VoiceRoom** - 랜딩페이지, 법적문서, STT 음성인식
+7. **Threads 뉴스레터 발행** - 자동화된 부동산 뉴스 큐레이션
 
 ---
 
-## 1. 금토끼부동산 웹페이지
+## 전체 요청 흐름도
 
-### 개요
-- **URL**: `https://goldenrabbit.biz/`
-- **목적**: 공개 메인 홈페이지 (브랜딩, 매물 소개, 상담 문의)
-- **기술**: 정적 HTML/CSS/JavaScript, Nginx
-
-### 주요 참조 파일
-
-#### 프론트엔드
 ```
-frontend/public/
-├── index.html                    # 메인 홈페이지
-├── about.html                    # 회사 소개
-├── inquiry.html                  # 상담 문의 페이지
-├── property-detail.html          # 매물 상세보기
-├── privacy-policy.html           # 개인정보처리방침
-├── terms-of-service.html         # 이용약관
-├── data-deletion.html            # 데이터 삭제 정책
-├── airtable_map.html            # 매물 지도 (cron 자동 생성)
-├── css/
-│   └── styles.css                # 메인 스타일시트
-├── js/
-│   └── main.js                   # 메인 JavaScript
-├── images/
-│   ├── logo_goldenrabbit.jpg     # 로고
-│   └── favicon_goldenrabbit_01.png # 파비콘
-├── blog_thumbs/                  # 블로그 썸네일 (자동 생성)
-└── data/
-    └── latest_news.json          # 최신 뉴스 (뉴스레터 시스템이 생성)
-```
-
-#### 백엔드 API (Port 8000)
-```
-backend/api/
-├── app.py                        # Flask API 서버 메인
-└── utils/
-    ├── backup_loader.py          # 백업 데이터 로더
-    ├── instagram_auth.py         # Instagram 인증
-    ├── threads_auth.py           # Threads 인증
-    └── token_manager.py          # 토큰 관리
-```
-
-#### 주요 API 엔드포인트
-- `/api/property-list` - 매물 목록
-- `/api/property-detail` - 매물 상세 조회
-- `/api/category-properties` - 카테고리별 매물
-- `/api/search-map` - 지도 검색
-- `/api/submit-inquiry` - 상담 문의 접수
-- `/api/blog-feed` - 블로그 RSS 피드
-- `/data/latest_news.json` - 최신 뉴스
-- `/property/{record_id}` - SNS 공유용 메타 태그 생성
-
-#### Nginx 설정
-```
-config/nginx/goldenrabbit.conf    # Nginx 메인 설정 파일
-```
-
-### 데이터 흐름
-1. 정적 HTML/CSS/JS → Nginx → 사용자
-2. API 요청 → Nginx → Port 8000 (API Server) → Airtable 백업 데이터
-3. 이미지 → `/airtable_backup/images/` → Nginx 정적 파일
-
----
-
-## 2. 부동산정보조회 웹서비스 (Property Manager)
-
-### 개요
-- **URL**: `https://goldenrabbit.biz/property-manager/`
-- **목적**: 관리자용 건축물 정보 조회 및 Airtable 저장
-- **기술**: Flask (Python), 공공데이터 API, VWorld API
-- **인증**: 세션 기반 로그인 (`@login_required`)
-
-### 주요 참조 파일
-
-#### 백엔드 (Port 5000)
-```
-backend/property-manager/
-├── app.py                        # Flask 앱 메인 (Property Manager + PropSheet)
-├── routes/
-│   ├── address_finder.py         # 주소 찾기
-│   ├── airtable.py               # Airtable 저장
-│   ├── app_api.py                # 앱 API (건물 검색, PDF 생성)
-│   ├── app_auth.py               # 앱 사용자 인증
-│   ├── app_user_data.py          # 사용자 데이터 (즐겨찾기, 히스토리)
-│   ├── auth.py                   # 로그인 인증 (@login_required)
-│   ├── blog.py                   # 블로그 관리
-│   ├── database.py               # 데이터베이스 관리
-│   ├── geocoding.py              # 지오코딩
-│   ├── instagram.py              # Instagram 연동
-│   ├── property.py               # 건축물 정보 조회
-│   ├── propsheet.py              # PropSheet 라우트
-│   ├── search.py                 # 건물 검색
-│   ├── search_map.py             # 지도 검색
-│   └── workspace.py              # 워크스페이스 관리
-├── services/
-│   ├── address_finder_service.py    # 주소 검색 서비스
-│   ├── airtable_service.py          # Airtable CRUD
-│   ├── app_favorite_service.py      # 앱 즐겨찾기 서비스
-│   ├── app_history_service.py       # 앱 검색기록 서비스
-│   ├── app_usage_stats_service.py   # 앱 사용 통계 서비스
-│   ├── app_user_service.py          # 앱 사용자 서비스
-│   ├── bjdong_service.py            # 법정동 코드 변환
-│   ├── blog_service.py              # 블로그 서비스
-│   ├── building_unified_service.py  # 통합 건축물 조회 (일반/다세대 자동 라우팅)
-│   ├── cadastral_service.py         # 지적도 서비스
-│   ├── database_service.py          # 데이터베이스 서비스
-│   ├── instagram_service.py         # Instagram 서비스
-│   ├── pdf_service.py               # PDF 생성 서비스
-│   ├── pdf_service_v2.py            # PDF 생성 서비스 v2
-│   ├── record_id_service.py         # 레코드 ID 서비스
-│   ├── schema_service.py            # 스키마 서비스
-│   ├── vworld_service.py            # VWorld API (토지 정보, 대지지분)
-│   └── workspace_service.py         # 워크스페이스 서비스
-├── templates/
-│   ├── index.html                # Property Manager 메인
-│   ├── public.html               # 공개 조회 페이지 (로그인 불필요)
-│   └── address_finder.html       # 주소 찾기 페이지
-└── static/
-    ├── app.js                    # Property Manager JavaScript
-    └── styles.css                # Property Manager 스타일
-```
-
-#### 주요 API 엔드포인트
-- `/property-manager/` - 메인 페이지 (로그인 필요)
-- `/property-manager/public/` - 공개 조회 페이지
-- `/property-manager/address-finder` - 주소 찾기
-- `/property-manager/api/property/area` - 건축물 면적 조회
-- `/property-manager/api/property/title` - 건축물 표제부
-- `/property-manager/api/airtable/save` - Airtable 저장
-- `/property-manager/login` - 로그인
-- `/property-manager/logout` - 로그아웃
-
-### 핵심 로직
-1. **건축물 통합 조회**: `building_unified_service.py`가 일반건축물/다세대를 자동 판별
-2. **대지지분 계산**: VWorld API 우선 → 실패 시 수동 계산
-3. **주소 변환**: Google Apps Script로 주소 → 법정동코드 변환
-4. **Airtable 저장**: 조회 결과를 Airtable에 저장
-
----
-
-## 3. 부동산정보조회 웹앱서비스 (PWA App)
-
-### 개요
-- **URL**: `https://goldenrabbit.biz/app/`
-- **목적**: 일반 사용자용 PWA 앱 (모바일 최적화)
-- **기술**: PWA (Service Worker, Manifest), Flask API
-- **기능**: 건물 검색, 결과 PDF 저장, 즐겨찾기, 히스토리
-
-### 주요 참조 파일
-
-#### 프론트엔드 (PWA)
-```
-frontend/public/app/
-├── index.html                    # 앱 메인 페이지
-├── login.html                    # 로그인
-├── profile.html                  # 사용자 프로필
-├── search-method.html            # 검색 방법 선택
-├── search-jibun.html             # 지번 검색
-├── search-road.html              # 도로명 검색
-├── search-map.html               # 지도 검색
-├── result.html                   # 검색 결과
-├── favorites.html                # 즐겨찾기
-├── history.html                  # 검색 히스토리
-├── about.html                    # 앱 정보
-├── manifest.json                 # PWA Manifest
-├── sw.js                         # Service Worker
-├── ad-consent.js                 # 광고 동의
-├── js/
-│   ├── app.js                    # 앱 메인 로직
-│   ├── search.js                 # 검색 기능
-│   ├── map.js                    # 지도 기능
-│   └── pdf.js                    # PDF 생성
-├── css/
-│   └── app.css                   # 앱 스타일
-└── images/
-    ├── favicon.ico               # 파비콘
-    ├── icon-192x192.png          # PWA 아이콘
-    ├── icon-512x512.png          # PWA 아이콘
-    └── maskable-icon.png         # Maskable 아이콘
-```
-
-#### 백엔드 API (Port 5000)
-```
-backend/property-manager/
-├── routes/
-│   ├── app_api.py                # 앱 API (건물 검색, PDF 생성)
-│   ├── app_auth.py               # 앱 사용자 인증
-│   └── app_user_data.py          # 사용자 데이터 (즐겨찾기, 히스토리)
-└── services/
-    ├── app_favorite_service.py   # 즐겨찾기 서비스
-    ├── app_history_service.py    # 검색기록 서비스
-    ├── app_usage_stats_service.py # 사용 통계 서비스
-    ├── app_user_service.py       # 사용자 서비스
-    └── pdf_service_v2.py         # PDF 생성 서비스
-```
-
-#### 주요 API 엔드포인트
-- `/app/api/search-jibun` - 지번 검색
-- `/app/api/search-road` - 도로명 검색
-- `/app/api/generate-pdf` - PDF 생성
-- `/app/api/auth/register` - 회원가입
-- `/app/api/auth/login` - 로그인
-- `/app/api/user/favorites` - 즐겨찾기 관리
-- `/app/api/user/history` - 검색 히스토리
-
-### Nginx 설정
-```nginx
-# 앱 정적 파일 (PWA)
-location /app/ {
-    alias /home/webapp/goldenrabbit/frontend/public/app/;
-    try_files $uri $uri/ /app/index.html;
-}
-
-# 앱 API (백엔드)
-location /app/api/ {
-    proxy_pass http://127.0.0.1:5000;
-}
+[사용자/앱]
+      │
+      ▼
+https://goldenrabbit.biz (port 443)
+      │
+      ▼
+   [Nginx 리버스 프록시]
+      │
+      ├─ /app/api/*  ──────→ [Property Manager :5000]  ──→ PostgreSQL (app_users)
+      │                       MultiPrefixMiddleware         공공데이터 API (apis.data.go.kr)
+      │                       strips "/app" prefix
+      │
+      ├─ /api/*  ───────────→ [API Server :8000]  ──────→ Airtable
+      │                                                     VWorld API
+      │
+      ├─ /shorts/*  ────────→ [Shorts Automation :5002]
+      │
+      ├─ /proptalk/*  ──────→ [PropTalk/VoiceRoom :5060]
+      │   /voiceroom/*
+      │
+      ├─ /app/*  ───────────→ [정적 파일] frontend/public/app/ (Flutter 웹 빌드)
+      └─ /*  ───────────────→ [정적 파일] frontend/public/ (메인 웹페이지)
 ```
 
 ---
 
-## 4. 부동산데이터관리 시스템 (PropSheet)
+## 포트 및 서비스 매핑
 
-### 개요
-- **URL**: `https://goldenrabbit.biz/propsheet/`
-- **목적**: 워크스페이스 기반 데이터베이스 관리 (Notion 스타일)
-- **기술**: Flask, SQLite (workspace.db)
-- **인증**: 로그인 필요 (`@login_required`)
-
-### 주요 참조 파일
-
-#### 백엔드 (Port 5000 - Property Manager와 동일 앱)
-```
-backend/property-manager/
-├── app.py                        # Flask 앱 (MultiPrefixMiddleware)
-├── routes/
-│   ├── propsheet.py              # PropSheet 라우트
-│   ├── database.py               # 데이터베이스 관리
-│   └── workspace.py              # 워크스페이스 관리
-├── services/
-│   ├── database_service.py       # 데이터베이스 서비스
-│   ├── schema_service.py         # 스키마 서비스
-│   └── workspace_service.py      # 워크스페이스/데이터베이스 관리
-└── templates/propsheet/
-    ├── workspaces.html           # 워크스페이스 목록
-    ├── workspace_detail.html     # 워크스페이스 상세
-    └── database_list.html        # 데이터베이스 목록
-```
-
-#### 데이터베이스
-```
-backend/property-manager/
-└── workspace.db                  # SQLite 데이터베이스
-    ├── workspaces                # 워크스페이스 테이블
-    ├── databases                 # 데이터베이스 테이블
-    └── {table_name}              # 각 데이터베이스별 동적 테이블
-```
-
-#### 주요 API 엔드포인트
-- `/propsheet/workspaces` - 워크스페이스 목록
-- `/propsheet/workspace/{slug}` - 워크스페이스 상세
-- `/propsheet/workspace/{ws_slug}/database/{db_slug}` - 데이터베이스 뷰
-- `/propsheet/api/workspaces` - 워크스페이스 목록 API
-- `/propsheet/api/workspace` - 워크스페이스 생성/수정/삭제
-- `/propsheet/api/workspace/{slug}/database` - 데이터베이스 생성
-
-### 핵심 기능
-1. **워크스페이스 관리**: Slug 기반 URL 라우팅
-2. **데이터베이스 관리**: 동적 테이블 생성, 복제
-3. **레거시 리다이렉션**: 기존 `/property-manager/database` → PropSheet로 자동 리다이렉트
+| 포트 | 서비스 | 프로세스 관리 | WorkingDirectory | 역할 |
+|------|--------|--------------|------------------|------|
+| 80/443 | Nginx | systemd | - | 리버스 프록시 + 정적 파일 |
+| 5000 | Property Manager | systemd (`property-manager.service`) | `/backend/property-manager/` | 건축물 조회 + PropSheet + 앱 API |
+| 8000 | API Server | systemd (`goldenrabbit-api.service`) | `/backend/api/` | VWorld/Airtable 프록시, 매물정보 |
+| 5002 | Shorts Automation | systemd (`shorts-automation.service`) | `/backend/shorts_automation/` | 쇼츠 자동 생성 |
+| 5060 | VoiceRoom | PM2 (`voiceroom`) | `/chat_stt/server/` | STT 음성인식 |
 
 ---
 
-## 5. Threads 뉴스레터 발행 관련
+## Nginx URL 라우팅 맵
 
-### 개요
-- **목적**: 네이버 부동산 뉴스 크롤링 → Claude 요약 → Threads 발행 + 웹사이트 업데이트
-- **실행**: Cron (예정된 시간에 자동 실행)
-- **기술**: Python, Anthropic Claude API, Threads API
+설정 파일: `/etc/nginx/sites-enabled/goldenrabbit`
+(원본: `/home/webapp/goldenrabbit/config/nginx/goldenrabbit.conf`)
 
-### 주요 참조 파일
-
-#### 뉴스레터 시스템
 ```
-backend/real-estate-newsletter/
-├── main.py                       # 메인 실행 파일
-├── publish_scheduled.py          # 스케줄러 (예정 발행)
-├── refresh_token.py              # Threads 토큰 갱신
-├── requirements.txt              # Python 패키지
-├── data/
-│   ├── daily_news.json           # 일일 뉴스 데이터
-│   └── publish_status.json       # 발행 상태
-├── logs/
-│   └── newsletter.log            # 로그 파일
-└── src/
-    ├── config.py                 # 설정 파일
-    ├── crawler.py                # 네이버 뉴스 크롤러
-    ├── summarizer.py             # Claude AI 요약
-    └── threads_publisher.py      # Threads 발행
-```
+요청 URL                        → 프록시 대상         → 서비스
+──────────────────────────────────────────────────────────────────
+/app/api/auth/*                 → port 5000          → Property Manager (Flask)
+/app/api/admin/*                → port 5000          → Property Manager
+/app/api/*                      → port 5000          → Property Manager
+/app/dashboard                  → port 5000          → Property Manager (관리자 대시보드)
+/app/*                          → 정적 파일           → frontend/public/app/ (PWA)
 
-#### 웹사이트 연동
-```
-frontend/public/data/
-└── latest_news.json              # 뉴스레터 시스템이 생성 (오전 업데이트)
-```
+/property-manager/*             → port 5000          → Property Manager
+/propsheet/*                    → port 5000          → Property Manager
 
-### 워크플로우
-1. **크롤링**: `crawler.py` → 네이버 부동산 뉴스 수집
-2. **요약**: `summarizer.py` → Claude API로 뉴스 요약
-3. **발행**: `threads_publisher.py` → Threads 게시
-4. **웹사이트 업데이트**: `latest_news.json` 생성 (오전 6-12시)
+/api/vworld                     → port 8000          → API Server (Flask)
+/api/vtile                      → port 8000          → API Server
+/api/wms                        → port 8000          → API Server
+/api/shorts                     → port 5002          → Shorts Automation
+/api/*                          → port 8000          → API Server
+/property/{id}                  → port 8000          → API Server (SNS 메타태그)
+/(auth|webhook|deauth)/threads  → port 8000          → API Server
+/services                       → port 8000          → API Server
 
-### 실행 방법
-```bash
-# 수동 실행
-cd /home/webapp/goldenrabbit/backend/real-estate-newsletter
-python3 main.py run
+/shorts/*                       → port 5002          → Shorts Automation (Flask)
 
-# 예정 발행 (스케줄러)
-python3 publish_scheduled.py
+/proptalk/*                     → port 5060          → PropTalk (Flask+PM2)
+/voiceroom/api/*                → port 5060          → VoiceRoom STT
+/voiceroom/socket.io/*          → port 5060          → VoiceRoom WebSocket
 
-# 토큰 갱신
-python3 refresh_token.py
+/                               → 정적 파일           → frontend/public/
+/proppedia/                     → 정적 파일           → frontend/public/proppedia/
+/airtable_backup/*              → 정적 파일           → backups/airtable/
+/blog_thumbs/*                  → 정적 파일           → frontend/public/blog_thumbs/
+/uploads/airtable/*             → 정적 파일           → backups/airtable/images/
+/uploads/blog/*                 → 정적 파일           → backend/uploads/blog/
 ```
 
-### API 엔드포인트
+### 보안 규칙
+- `location ~ /\.` → 모든 dot파일 차단 (`.env`, `.htaccess` 등)
+- HTTP → HTTPS 강제 리다이렉트
+- SSL: Let's Encrypt (`/etc/letsencrypt/live/goldenrabbit.biz/`)
+
+### 캐싱 정책
+- HTML: 캐시 없음 (항상 최신)
+- CSS/JS: 7일
+- 이미지: 30일
+- PWA manifest/service worker: 캐시 없음
+
+---
+
+## Systemd 서비스 상세
+
+### property-manager.service (포트 5000)
+
+```ini
+# /etc/systemd/system/property-manager.service
+[Service]
+WorkingDirectory=/home/webapp/goldenrabbit/backend/property-manager
+Environment="PYTHONPATH=/home/webapp/goldenrabbit/backend"
+ExecStart=/home/webapp/goldenrabbit/backend/venv/bin/python app.py
+Restart=always
 ```
-# API 서버 (Port 8000)에서 제공
-/api/news/refresh    # 뉴스 수동 새로고침
-/api/news/status     # 뉴스 상태 확인
-/data/latest_news.json  # 최신 뉴스 데이터
+
+**MultiPrefixMiddleware**로 3개 URL 접두사를 하나의 Flask 앱에서 처리:
+- `/property-manager` → 관리자 건축물 조회
+- `/propsheet` → 워크스페이스 데이터베이스 관리
+- `/app` → Propedia 앱 API (auth, search, favorites, history 등)
+
+주요 블루프린트:
+```
+app_api.bp         → /api          (→ 실제: /app/api/*)          건축물 검색
+app_auth.bp        → /api/auth     (→ 실제: /app/api/auth/*)     Google 인증
+app_user_data.bp   → /api/user     (→ 실제: /app/api/user/*)     즐겨찾기, 검색기록
+admin_dashboard.bp → /              (→ 실제: /app/dashboard)      관리자 대시보드
+search.bp          → /api          (→ 실제: /property-manager/api/*)  건물 검색
+property.bp        → /api          (→ 실제: /property-manager/api/*)  건축물 정보
+airtable.bp        → /api          (→ 실제: /property-manager/api/*)  Airtable 저장
+propsheet.bp       → (no prefix)   (→ 실제: /propsheet/*)        PropSheet
+```
+
+### goldenrabbit-api.service (포트 8000)
+
+```ini
+# /etc/systemd/system/goldenrabbit-api.service
+[Service]
+WorkingDirectory=/home/webapp/goldenrabbit/backend/api
+Environment="PYTHONPATH=/home/webapp/goldenrabbit/backend"
+ExecStart=/home/webapp/goldenrabbit/backend/venv/bin/python app.py
+Restart=always
+```
+
+### shorts-automation.service (포트 5002)
+
+```ini
+# /etc/systemd/system/shorts-automation.service
+[Service]
+WorkingDirectory=/home/webapp/goldenrabbit/backend/shorts_automation
+ExecStart=/home/webapp/goldenrabbit/backend/venv/bin/python app.py
+Restart=always
 ```
 
 ---
 
-## 통합 인프라
+## PM2 프로세스
 
-### 공유 리소스
+| 이름 | 포트 | 경로 | 역할 |
+|------|------|------|------|
+| `voiceroom` | 5060 | `/home/webapp/goldenrabbit/chat_stt/server/app.py` | STT 음성인식 |
+| `pm2-logrotate` | - | PM2 모듈 | 로그 로테이션 |
 
-#### 환경 변수
-```
-backend/.env                      # 모든 서비스가 공유하는 환경 변수
-```
+---
 
-**주요 환경 변수**:
-- `AIRTABLE_API_KEY` - Airtable API 키
-- `PUBLIC_API_KEY` - 공공데이터포털 API 키
-- `VWORLD_APIKEY` - VWorld API 키
-- `GOOGLE_SCRIPT_URL` - 주소 변환 스크립트 URL
-- `FLASK_SECRET_KEY` - Flask 세션 키
-- `ADMIN_USERNAME` / `ADMIN_PASSWORD_HASH` - 관리자 인증
-- `ANTHROPIC_API_KEY` - Claude API 키
-- `KAKAO_REST_API_KEY` - 카카오 지오코딩 API
+## Propedia Flutter 앱의 API 연결
 
-#### 가상환경
-```
-backend/venv/                     # 모든 백엔드 서비스가 공유
+### Base URL
+```dart
+// lib/core/network/api_client.dart
+static const String baseUrl = 'https://goldenrabbit.biz';
 ```
 
-#### 로그 디렉토리
+### 앱이 사용하는 엔드포인트
+
+| 카테고리 | 메서드 | 경로 | 서버 |
+|----------|--------|------|------|
+| **인증** | POST | `/app/api/auth/google` | port 5000 |
+| | GET | `/app/api/auth/me` | port 5000 |
+| | POST | `/app/api/auth/refresh` | port 5000 |
+| | POST | `/app/api/auth/logout` | port 5000 |
+| **건축물 검색** | POST | `/app/api/search/road` | port 5000 |
+| | POST | `/app/api/search/jibun` | port 5000 |
+| | POST | `/app/api/search/bdmgtsn` | port 5000 |
+| | GET | `/app/api/bjdong/search` | port 5000 |
+| | POST | `/app/api/area` | port 5000 |
+| **사용자 데이터** | GET/POST/DELETE | `/app/api/user/favorites` | port 5000 |
+| | GET/POST/DELETE | `/app/api/user/history` | port 5000 |
+| | GET | `/app/api/user/usage-stats` | port 5000 |
+| **매물 정보** | GET | `/api/property-list` | port 8000 |
+| | GET | `/api/category-properties` | port 8000 |
+| | GET | `/api/property-detail` | port 8000 |
+| | GET | `/api/coordinates` | port 8000 |
+| | POST | `/api/search-map` | port 8000 |
+
+### 인증 흐름
+1. Google Sign-In SDK → `idToken` 획득
+2. `POST /app/api/auth/google` → JWT `access_token` + `refresh_token` 발급
+3. `AuthInterceptor`가 모든 요청에 `Authorization: Bearer {token}` 자동 추가
+4. 401 응답 시 → `/app/api/auth/refresh`로 토큰 갱신 → 실패 시 로그아웃
+
+### 토큰 저장
+- **모바일**: FlutterSecureStorage (암호화)
+- **웹**: SharedPreferences (localStorage)
+
+### Google OAuth Client IDs
+- **serverClientId (모바일)**: `846392940969-a7k37gkon1p451mlnhp0oj9qaok1d8o1.apps.googleusercontent.com`
+- **Web Client ID**: `846392940969-sv2936v0tm85j8hvdn3srcmtei1kk25e.apps.googleusercontent.com`
+- Android Debug: `846392940969-g2afoiuc6m7kp64vp4fdo48rp2iqkt30.apps.googleusercontent.com`
+- Android Release: `846392940969-1sdp4mc01gbsq2dgne4h8mnuvobi5644.apps.googleusercontent.com`
+
+---
+
+## 공유 리소스
+
+### 환경 변수
+```
+/home/webapp/goldenrabbit/backend/.env    # 모든 서비스 공유
+```
+
+주요 변수: `AIRTABLE_API_KEY`, `PUBLIC_API_KEY`, `VWORLD_APIKEY`, `GOOGLE_SCRIPT_URL`, `FLASK_SECRET_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `ANTHROPIC_API_KEY`, `KAKAO_REST_API_KEY`, `JWT_SECRET_KEY`, `DB_*` (PostgreSQL)
+
+### 가상환경
+```
+/home/webapp/goldenrabbit/backend/venv/   # 모든 Python 서비스 공유
+```
+
+### 로그 디렉토리
 ```
 logs/
-├── api/
-│   ├── api_debug.log             # API 서버 로그
-│   ├── service.log               # 서비스 로그
-│   └── error.log                 # 에러 로그
-├── property-manager/
-│   ├── app.log                   # Property Manager 로그
-│   ├── service.log               # 서비스 로그
-│   └── error.log                 # 에러 로그
+├── api/                 # API Server (port 8000)
+│   ├── service.log
+│   └── error.log
+├── property-manager/    # Property Manager (port 5000)
+│   ├── app.log          # RotatingFileHandler (10MB x 5)
+│   ├── service.log
+│   └── error.log
 └── nginx/
-    ├── access.log                # Nginx 접근 로그
-    └── error.log                 # Nginx 에러 로그
+    ├── access.log
+    └── error.log
 ```
 
-### Systemd 서비스
+### 데이터베이스
+- **PostgreSQL**: `goldenrabbit_db` (user: `goldenrabbit_user`) — app_users, app_notices 등
+- **SQLite**: `/backend/property-manager/workspace.db` — PropSheet 워크스페이스/데이터베이스
 
-#### 서비스 파일
-```
-config/systemd/
-├── goldenrabbit-api.service      # API 서버 (Port 8000)
-└── goldenrabbit-property.service # Property Manager (Port 5000)
-```
+---
 
-#### 서비스 관리
+## Cron Jobs
+
 ```bash
-# 시작
-sudo systemctl start goldenrabbit-api
-sudo systemctl start goldenrabbit-property
-
-# 상태 확인
-sudo systemctl status goldenrabbit-api
-sudo systemctl status goldenrabbit-property
-
-# 재시작
-sudo systemctl restart goldenrabbit-api
-sudo systemctl restart goldenrabbit-property
-
-# 로그 확인
-journalctl -u goldenrabbit-api -f
-journalctl -u goldenrabbit-property -f
-```
-
-### Cron Jobs
-
-#### Airtable 백업
-```cron
-# 매일 오전 2시
+# Airtable 백업 (매일 오전 2시)
 0 2 * * * /usr/bin/python3 /home/webapp/goldenrabbit/backend/scripts/airtable_backup.py
-```
-- **스크립트**: `backend/scripts/airtable_backup.py`
-- **출력**: `backups/airtable/all_properties.json`, `coordinates.json`
-- **로그**: `/var/log/airtable_backup.log`
+# → 출력: backups/airtable/all_properties.json, coordinates.json
 
-#### 지도 생성
-```cron
-# 매일 오전 3시
+# 지도 생성 (매일 오전 3시)
 0 3 * * * /usr/bin/python3 /home/webapp/goldenrabbit/backend/scripts/generate_map.py
-```
-- **스크립트**: `backend/scripts/generate_map.py`
-- **출력**: `frontend/public/airtable_map.html`
-- **로그**: `/var/log/airtable_map.log`
-
-### 스크립트 목록
-```
-backend/scripts/
-├── airtable_backup.py            # Airtable 백업
-├── fetch_recomm_images.py        # 추천 이미지 가져오기
-├── generate_map.py               # 지도 HTML 생성
-├── instagram_auth.py             # Instagram 인증
-├── instagram_token_exchange.py   # Instagram 토큰 교환
-├── instagram_token_manager.py    # Instagram 토큰 관리
-├── quick_token_setup.py          # 빠른 토큰 설정
-├── save_blog_thumbnails.py       # 블로그 썸네일 저장
-├── setup_threads_token_from_code.py # Threads 토큰 설정
-├── test_instagram_token.py       # Instagram 토큰 테스트
-├── threads_auth.py               # Threads 인증
-├── threads_oauth_helper.py       # Threads OAuth 헬퍼
-├── token_manager.py              # 토큰 관리
-└── update_bjdong_codes.py        # 법정동 코드 업데이트
+# → 출력: frontend/public/airtable_map.html
 ```
 
 ---
 
-## 포트 및 URL 매핑
+## 서비스 관리 명령어
 
-| 서비스 | 포트 | URL | 백엔드 위치 |
-|--------|------|-----|-------------|
-| API Server | 8000 | `/api/*`, `/property/{id}` | `backend/api/` |
-| Property Manager | 5000 | `/property-manager/*` | `backend/property-manager/` |
-| PropSheet | 5000 | `/propsheet/*` | `backend/property-manager/` |
-| App | 5000 | `/app/*` (정적), `/app/api/*` (API) | `frontend/public/app/`, `backend/property-manager/` |
-| 메인 웹페이지 | - | `/` | `frontend/public/` (Nginx 정적) |
-
----
-
-## 배포 및 재시작
-
-### 백엔드 배포
 ```bash
-cd /home/webapp/goldenrabbit/backend
-git pull
-sudo systemctl restart goldenrabbit-api
-sudo systemctl restart goldenrabbit-property
-```
+# Property Manager (앱 API)
+sudo systemctl start|stop|restart|status property-manager
+journalctl -u property-manager -f
 
-### 프론트엔드 배포
-```bash
-cd /home/webapp/goldenrabbit/frontend
-git pull
-# Nginx는 정적 파일을 직접 제공하므로 재시작 불필요
-# 필요 시에만: sudo systemctl reload nginx
-```
+# API Server
+sudo systemctl start|stop|restart|status goldenrabbit-api
+journalctl -u goldenrabbit-api -f
 
-### Nginx 설정 변경
-```bash
-sudo nginx -t  # 설정 테스트
-sudo systemctl reload nginx  # 리로드
-```
+# Shorts Automation
+sudo systemctl start|stop|restart|status shorts-automation
 
----
+# VoiceRoom (PM2)
+pm2 restart voiceroom
+pm2 logs voiceroom
 
-## 트러블슈팅
-
-### 서비스가 시작되지 않을 때
-```bash
-# 로그 확인
-journalctl -u goldenrabbit-api -n 50 --no-pager
-journalctl -u goldenrabbit-property -n 50 --no-pager
+# Nginx
+sudo nginx -t          # 설정 테스트
+sudo systemctl reload nginx
 
 # 포트 확인
-lsof -i:8000
-lsof -i:5000
-
-# 환경 변수 확인
-grep -E "AIRTABLE_API_KEY|PUBLIC_API_KEY" /home/webapp/goldenrabbit/backend/.env
+ss -tlnp | grep -E '5000|5002|5060|8000|80|443'
 ```
-
-### 세션 문제 (Property Manager / PropSheet)
-- 쿠키 경로: `/` (property-manager와 propsheet 공유)
-- 세션 유지 시간: 24시간
-- `FLASK_SECRET_KEY` 확인
-
-### VWorld API 실패
-- 자동으로 수동 계산으로 fallback
-- 로그에서 "VWorld API 호출 실패 - 수동 계산으로 fallback" 확인
 
 ---
 
-## 참고 문서
+## 주요 파일 경로
 
-- [CLAUDE.md](/home/webapp/goldenrabbit/CLAUDE.md) - Claude Code용 프로젝트 가이드
-- [Nginx 설정](/home/webapp/goldenrabbit/config/nginx/goldenrabbit.conf) - 라우팅 규칙
-- [Systemd 서비스](/home/webapp/goldenrabbit/config/systemd/) - 서비스 설정
+```
+/home/webapp/goldenrabbit/
+├── backend/
+│   ├── .env                              # 공유 환경 변수
+│   ├── venv/                             # 공유 가상환경
+│   ├── api/app.py                        # API Server (port 8000)
+│   ├── property-manager/
+│   │   ├── app.py                        # Property Manager (port 5000)
+│   │   ├── routes/
+│   │   │   ├── app_api.py                # 앱 건축물 검색 API
+│   │   │   ├── app_auth.py               # 앱 Google 인증
+│   │   │   ├── app_user_data.py          # 앱 사용자 데이터
+│   │   │   ├── admin_dashboard.py        # 관리자 대시보드
+│   │   │   ├── search.py                 # Property Manager 검색
+│   │   │   ├── property.py               # 건축물 정보
+│   │   │   ├── propsheet.py              # PropSheet
+│   │   │   └── ...
+│   │   ├── services/
+│   │   │   ├── app_user_service.py       # 앱 사용자/JWT 서비스
+│   │   │   ├── building_unified_service.py # 통합 건축물 조회
+│   │   │   ├── pdf_service_v2.py         # PDF 생성
+│   │   │   └── ...
+│   │   └── workspace.db                  # PropSheet SQLite DB
+│   ├── shorts_automation/app.py          # Shorts (port 5002)
+│   ├── real-estate-newsletter/           # Threads 뉴스레터
+│   └── scripts/                          # 유틸리티 스크립트
+├── chat_stt/server/app.py                # VoiceRoom (port 5060)
+├── config/
+│   ├── nginx/goldenrabbit.conf           # Nginx 설정 원본
+│   └── systemd/                          # Systemd 서비스 파일
+├── frontend/public/
+│   ├── index.html                        # 메인 웹페이지
+│   ├── app/                              # Flutter 웹 빌드 (PWA)
+│   └── proppedia/                        # Proppedia 랜딩 페이지
+├── backups/airtable/                     # Airtable 백업 데이터/이미지
+└── logs/                                 # 로그 디렉토리
+```
+
+---
+
+## 변경 이력
+
+| 날짜 | 내용 |
+|------|------|
+| 2026-03-11 | PM2 좀비 프로세스 정리 (building-service, multi-unit-building-service 삭제), goldenrabbit-property.service 삭제 (property-manager.service와 중복), Shorts/VoiceRoom/PropTalk 서비스 추가, Flutter 앱 API 엔드포인트 추가, Google OAuth 설정 추가 |
+| 2026-02-23 | 초기 작성 |
