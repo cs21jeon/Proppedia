@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:propedia/core/constants/app_colors.dart';
+import 'package:propedia/presentation/providers/app_info_provider.dart';
 
 /// 현재 앱 타입
 enum AppType {
@@ -9,7 +11,7 @@ enum AppType {
 }
 
 /// 앱 공통 드로어 (햄버거 메뉴)
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   final AppType currentApp;
 
   const AppDrawer({
@@ -18,7 +20,7 @@ class AppDrawer extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Drawer(
@@ -105,12 +107,12 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.info_outline,
                     title: '앱 정보',
-                    subtitle: 'Proppedia v1.0.0',
+                    subtitle: 'Proppedia v${ref.watch(appVersionProvider)}',
                     isSelected: false,
                     color: Colors.grey,
                     onTap: () {
                       Navigator.pop(context);
-                      _showAboutDialog(context);
+                      _showAboutDialog(context, ref);
                     },
                   ),
                 ],
@@ -236,7 +238,7 @@ class AppDrawer extends StatelessWidget {
     }
   }
 
-  void _showAboutDialog(BuildContext context) {
+  void _showAboutDialog(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -261,9 +263,9 @@ class AppDrawer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '부동산백과 v1.0.0',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              '부동산백과 v${ref.read(appVersionProvider)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(

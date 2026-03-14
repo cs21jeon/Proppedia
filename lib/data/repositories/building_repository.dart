@@ -51,13 +51,15 @@ class BuildingRepository {
     String bdMgtSn, {
     String? lnbrMnnm,
     String? lnbrSlno,
+    String? admCd,
   }) async {
     try {
-      debugPrint('📡 API 호출: searchByBdMgtSn($bdMgtSn, lnbrMnnm=$lnbrMnnm, lnbrSlno=$lnbrSlno)');
+      debugPrint('📡 API 호출: searchByBdMgtSn($bdMgtSn, lnbrMnnm=$lnbrMnnm, lnbrSlno=$lnbrSlno, admCd=$admCd)');
       final request = BdMgtSnSearchRequest(
         bdMgtSn: bdMgtSn,
         lnbrMnnm: lnbrMnnm,
         lnbrSlno: lnbrSlno,
+        admCd: admCd,
       );
       final response = await _buildingApi.searchByBdMgtSn(request);
       debugPrint('📡 API 응답: success=${response.success}');

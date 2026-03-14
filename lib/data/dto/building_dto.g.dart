@@ -28,6 +28,7 @@ _$RoadSearchResultItemImpl _$$RoadSearchResultItemImplFromJson(
       zipNo: json['zipNo'] as String?,
       lnbrMnnm: json['lnbrMnnm'] as String?,
       lnbrSlno: json['lnbrSlno'] as String?,
+      admCd: json['admCd'] as String?,
     );
 
 Map<String, dynamic> _$$RoadSearchResultItemImplToJson(
@@ -40,6 +41,7 @@ Map<String, dynamic> _$$RoadSearchResultItemImplToJson(
       'zipNo': instance.zipNo,
       'lnbrMnnm': instance.lnbrMnnm,
       'lnbrSlno': instance.lnbrSlno,
+      'admCd': instance.admCd,
     };
 
 _$RoadSearchResponseImpl _$$RoadSearchResponseImplFromJson(
@@ -90,6 +92,7 @@ _$BdMgtSnSearchRequestImpl _$$BdMgtSnSearchRequestImplFromJson(
       bdMgtSn: json['bdMgtSn'] as String,
       lnbrMnnm: json['lnbrMnnm'] as String?,
       lnbrSlno: json['lnbrSlno'] as String?,
+      admCd: json['admCd'] as String?,
     );
 
 Map<String, dynamic> _$$BdMgtSnSearchRequestImplToJson(
@@ -98,6 +101,7 @@ Map<String, dynamic> _$$BdMgtSnSearchRequestImplToJson(
       'bdMgtSn': instance.bdMgtSn,
       'lnbrMnnm': instance.lnbrMnnm,
       'lnbrSlno': instance.lnbrSlno,
+      'admCd': instance.admCd,
     };
 
 _$CodeInfoImpl _$$CodeInfoImplFromJson(Map<String, dynamic> json) =>

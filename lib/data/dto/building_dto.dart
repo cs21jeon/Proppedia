@@ -43,6 +43,7 @@ class RoadSearchResultItem with _$RoadSearchResultItem {
     String? zipNo,
     String? lnbrMnnm,  // 지번 본번 (토지 지번)
     String? lnbrSlno,  // 지번 부번 (토지 지번)
+    String? admCd,     // 법정동코드 (juso.go.kr)
   }) = _RoadSearchResultItem;
 
   factory RoadSearchResultItem.fromJson(Map<String, dynamic> json) =>
@@ -85,6 +86,7 @@ class BdMgtSnSearchRequest with _$BdMgtSnSearchRequest {
     required String bdMgtSn,
     String? lnbrMnnm,  // 지번 본번 (토지 지번)
     String? lnbrSlno,  // 지번 부번 (토지 지번)
+    String? admCd,     // 법정동코드 (juso.go.kr)
   }) = _BdMgtSnSearchRequest;
 
   factory BdMgtSnSearchRequest.fromJson(Map<String, dynamic> json) =>

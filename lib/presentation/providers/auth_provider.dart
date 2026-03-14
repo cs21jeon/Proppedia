@@ -73,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     scopes: ['email', 'profile'],
     serverClientId: kIsWeb
         ? null
-        : '846392940969-a7k37gkon1p451mlnhp0oj9qaok1d8o1.apps.googleusercontent.com',
+        : '846392940969-sv2936v0tm85j8hvdn3srcmtei1kk25e.apps.googleusercontent.com',
   );
 
   /// 웹에서 renderButton 사용을 위해 GoogleSignIn 인스턴스 노출

@@ -178,6 +178,7 @@ class _SearchRoadScreenState extends ConsumerState<SearchRoadScreen> {
             item.bdMgtSn,
             lnbrMnnm: item.lnbrMnnm,
             lnbrSlno: item.lnbrSlno,
+            admCd: item.admCd,
           );
           context.push('/result');
         },

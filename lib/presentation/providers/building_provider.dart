@@ -178,6 +178,7 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
     String bdMgtSn, {
     String? lnbrMnnm,
     String? lnbrSlno,
+    String? admCd,
     String searchType = 'road',
   }) async {
     state = state.copyWith(status: SearchStatus.loading, searchType: searchType);
@@ -187,6 +188,7 @@ class BuildingSearchNotifier extends StateNotifier<BuildingSearchState> {
         bdMgtSn,
         lnbrMnnm: lnbrMnnm,
         lnbrSlno: lnbrSlno,
+        admCd: admCd,
       );
       if (response.success) {
         state = BuildingSearchState(

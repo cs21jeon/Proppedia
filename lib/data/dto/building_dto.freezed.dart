@@ -170,7 +170,8 @@ mixin _$RoadSearchResultItem {
   String? get bdNm => throw _privateConstructorUsedError;
   String? get zipNo => throw _privateConstructorUsedError;
   String? get lnbrMnnm => throw _privateConstructorUsedError; // 지번 본번 (토지 지번)
-  String? get lnbrSlno => throw _privateConstructorUsedError;
+  String? get lnbrSlno => throw _privateConstructorUsedError; // 지번 부번 (토지 지번)
+  String? get admCd => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -191,7 +192,8 @@ abstract class $RoadSearchResultItemCopyWith<$Res> {
       String? bdNm,
       String? zipNo,
       String? lnbrMnnm,
-      String? lnbrSlno});
+      String? lnbrSlno,
+      String? admCd});
 }
 
 /// @nodoc
@@ -215,6 +217,7 @@ class _$RoadSearchResultItemCopyWithImpl<$Res,
     Object? zipNo = freezed,
     Object? lnbrMnnm = freezed,
     Object? lnbrSlno = freezed,
+    Object? admCd = freezed,
   }) {
     return _then(_value.copyWith(
       roadAddr: null == roadAddr
@@ -245,6 +248,10 @@ class _$RoadSearchResultItemCopyWithImpl<$Res,
           ? _value.lnbrSlno
           : lnbrSlno // ignore: cast_nullable_to_non_nullable
               as String?,
+      admCd: freezed == admCd
+          ? _value.admCd
+          : admCd // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -264,7 +271,8 @@ abstract class _$$RoadSearchResultItemImplCopyWith<$Res>
       String? bdNm,
       String? zipNo,
       String? lnbrMnnm,
-      String? lnbrSlno});
+      String? lnbrSlno,
+      String? admCd});
 }
 
 /// @nodoc
@@ -285,6 +293,7 @@ class __$$RoadSearchResultItemImplCopyWithImpl<$Res>
     Object? zipNo = freezed,
     Object? lnbrMnnm = freezed,
     Object? lnbrSlno = freezed,
+    Object? admCd = freezed,
   }) {
     return _then(_$RoadSearchResultItemImpl(
       roadAddr: null == roadAddr
@@ -315,6 +324,10 @@ class __$$RoadSearchResultItemImplCopyWithImpl<$Res>
           ? _value.lnbrSlno
           : lnbrSlno // ignore: cast_nullable_to_non_nullable
               as String?,
+      admCd: freezed == admCd
+          ? _value.admCd
+          : admCd // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -329,7 +342,8 @@ class _$RoadSearchResultItemImpl implements _RoadSearchResultItem {
       this.bdNm,
       this.zipNo,
       this.lnbrMnnm,
-      this.lnbrSlno});
+      this.lnbrSlno,
+      this.admCd});
 
   factory _$RoadSearchResultItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$RoadSearchResultItemImplFromJson(json);
@@ -349,10 +363,13 @@ class _$RoadSearchResultItemImpl implements _RoadSearchResultItem {
 // 지번 본번 (토지 지번)
   @override
   final String? lnbrSlno;
+// 지번 부번 (토지 지번)
+  @override
+  final String? admCd;
 
   @override
   String toString() {
-    return 'RoadSearchResultItem(roadAddr: $roadAddr, jibunAddr: $jibunAddr, bdMgtSn: $bdMgtSn, bdNm: $bdNm, zipNo: $zipNo, lnbrMnnm: $lnbrMnnm, lnbrSlno: $lnbrSlno)';
+    return 'RoadSearchResultItem(roadAddr: $roadAddr, jibunAddr: $jibunAddr, bdMgtSn: $bdMgtSn, bdNm: $bdNm, zipNo: $zipNo, lnbrMnnm: $lnbrMnnm, lnbrSlno: $lnbrSlno, admCd: $admCd)';
   }
 
   @override
@@ -370,13 +387,14 @@ class _$RoadSearchResultItemImpl implements _RoadSearchResultItem {
             (identical(other.lnbrMnnm, lnbrMnnm) ||
                 other.lnbrMnnm == lnbrMnnm) &&
             (identical(other.lnbrSlno, lnbrSlno) ||
-                other.lnbrSlno == lnbrSlno));
+                other.lnbrSlno == lnbrSlno) &&
+            (identical(other.admCd, admCd) || other.admCd == admCd));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, roadAddr, jibunAddr, bdMgtSn,
-      bdNm, zipNo, lnbrMnnm, lnbrSlno);
+      bdNm, zipNo, lnbrMnnm, lnbrSlno, admCd);
 
   @JsonKey(ignore: true)
   @override
@@ -402,7 +420,8 @@ abstract class _RoadSearchResultItem implements RoadSearchResultItem {
       final String? bdNm,
       final String? zipNo,
       final String? lnbrMnnm,
-      final String? lnbrSlno}) = _$RoadSearchResultItemImpl;
+      final String? lnbrSlno,
+      final String? admCd}) = _$RoadSearchResultItemImpl;
 
   factory _RoadSearchResultItem.fromJson(Map<String, dynamic> json) =
       _$RoadSearchResultItemImpl.fromJson;
@@ -421,6 +440,8 @@ abstract class _RoadSearchResultItem implements RoadSearchResultItem {
   String? get lnbrMnnm;
   @override // 지번 본번 (토지 지번)
   String? get lnbrSlno;
+  @override // 지번 부번 (토지 지번)
+  String? get admCd;
   @override
   @JsonKey(ignore: true)
   _$$RoadSearchResultItemImplCopyWith<_$RoadSearchResultItemImpl>
@@ -877,7 +898,8 @@ BdMgtSnSearchRequest _$BdMgtSnSearchRequestFromJson(Map<String, dynamic> json) {
 mixin _$BdMgtSnSearchRequest {
   String get bdMgtSn => throw _privateConstructorUsedError;
   String? get lnbrMnnm => throw _privateConstructorUsedError; // 지번 본번 (토지 지번)
-  String? get lnbrSlno => throw _privateConstructorUsedError;
+  String? get lnbrSlno => throw _privateConstructorUsedError; // 지번 부번 (토지 지번)
+  String? get admCd => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -891,7 +913,8 @@ abstract class $BdMgtSnSearchRequestCopyWith<$Res> {
           $Res Function(BdMgtSnSearchRequest) then) =
       _$BdMgtSnSearchRequestCopyWithImpl<$Res, BdMgtSnSearchRequest>;
   @useResult
-  $Res call({String bdMgtSn, String? lnbrMnnm, String? lnbrSlno});
+  $Res call(
+      {String bdMgtSn, String? lnbrMnnm, String? lnbrSlno, String? admCd});
 }
 
 /// @nodoc
@@ -911,6 +934,7 @@ class _$BdMgtSnSearchRequestCopyWithImpl<$Res,
     Object? bdMgtSn = null,
     Object? lnbrMnnm = freezed,
     Object? lnbrSlno = freezed,
+    Object? admCd = freezed,
   }) {
     return _then(_value.copyWith(
       bdMgtSn: null == bdMgtSn
@@ -925,6 +949,10 @@ class _$BdMgtSnSearchRequestCopyWithImpl<$Res,
           ? _value.lnbrSlno
           : lnbrSlno // ignore: cast_nullable_to_non_nullable
               as String?,
+      admCd: freezed == admCd
+          ? _value.admCd
+          : admCd // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -937,7 +965,8 @@ abstract class _$$BdMgtSnSearchRequestImplCopyWith<$Res>
       __$$BdMgtSnSearchRequestImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String bdMgtSn, String? lnbrMnnm, String? lnbrSlno});
+  $Res call(
+      {String bdMgtSn, String? lnbrMnnm, String? lnbrSlno, String? admCd});
 }
 
 /// @nodoc
@@ -954,6 +983,7 @@ class __$$BdMgtSnSearchRequestImplCopyWithImpl<$Res>
     Object? bdMgtSn = null,
     Object? lnbrMnnm = freezed,
     Object? lnbrSlno = freezed,
+    Object? admCd = freezed,
   }) {
     return _then(_$BdMgtSnSearchRequestImpl(
       bdMgtSn: null == bdMgtSn
@@ -968,6 +998,10 @@ class __$$BdMgtSnSearchRequestImplCopyWithImpl<$Res>
           ? _value.lnbrSlno
           : lnbrSlno // ignore: cast_nullable_to_non_nullable
               as String?,
+      admCd: freezed == admCd
+          ? _value.admCd
+          : admCd // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -976,7 +1010,7 @@ class __$$BdMgtSnSearchRequestImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$BdMgtSnSearchRequestImpl implements _BdMgtSnSearchRequest {
   const _$BdMgtSnSearchRequestImpl(
-      {required this.bdMgtSn, this.lnbrMnnm, this.lnbrSlno});
+      {required this.bdMgtSn, this.lnbrMnnm, this.lnbrSlno, this.admCd});
 
   factory _$BdMgtSnSearchRequestImpl.fromJson(Map<String, dynamic> json) =>
       _$$BdMgtSnSearchRequestImplFromJson(json);
@@ -988,10 +1022,13 @@ class _$BdMgtSnSearchRequestImpl implements _BdMgtSnSearchRequest {
 // 지번 본번 (토지 지번)
   @override
   final String? lnbrSlno;
+// 지번 부번 (토지 지번)
+  @override
+  final String? admCd;
 
   @override
   String toString() {
-    return 'BdMgtSnSearchRequest(bdMgtSn: $bdMgtSn, lnbrMnnm: $lnbrMnnm, lnbrSlno: $lnbrSlno)';
+    return 'BdMgtSnSearchRequest(bdMgtSn: $bdMgtSn, lnbrMnnm: $lnbrMnnm, lnbrSlno: $lnbrSlno, admCd: $admCd)';
   }
 
   @override
@@ -1003,12 +1040,14 @@ class _$BdMgtSnSearchRequestImpl implements _BdMgtSnSearchRequest {
             (identical(other.lnbrMnnm, lnbrMnnm) ||
                 other.lnbrMnnm == lnbrMnnm) &&
             (identical(other.lnbrSlno, lnbrSlno) ||
-                other.lnbrSlno == lnbrSlno));
+                other.lnbrSlno == lnbrSlno) &&
+            (identical(other.admCd, admCd) || other.admCd == admCd));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, bdMgtSn, lnbrMnnm, lnbrSlno);
+  int get hashCode =>
+      Object.hash(runtimeType, bdMgtSn, lnbrMnnm, lnbrSlno, admCd);
 
   @JsonKey(ignore: true)
   @override
@@ -1030,7 +1069,8 @@ abstract class _BdMgtSnSearchRequest implements BdMgtSnSearchRequest {
   const factory _BdMgtSnSearchRequest(
       {required final String bdMgtSn,
       final String? lnbrMnnm,
-      final String? lnbrSlno}) = _$BdMgtSnSearchRequestImpl;
+      final String? lnbrSlno,
+      final String? admCd}) = _$BdMgtSnSearchRequestImpl;
 
   factory _BdMgtSnSearchRequest.fromJson(Map<String, dynamic> json) =
       _$BdMgtSnSearchRequestImpl.fromJson;
@@ -1041,6 +1081,8 @@ abstract class _BdMgtSnSearchRequest implements BdMgtSnSearchRequest {
   String? get lnbrMnnm;
   @override // 지번 본번 (토지 지번)
   String? get lnbrSlno;
+  @override // 지번 부번 (토지 지번)
+  String? get admCd;
   @override
   @JsonKey(ignore: true)
   _$$BdMgtSnSearchRequestImplCopyWith<_$BdMgtSnSearchRequestImpl>

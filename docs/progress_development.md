@@ -2424,6 +2424,26 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 - PropNet 브랜딩 업데이트
 - **Google Play Store 프로덕션 출시**
 
+### [1.0.2+10] - 2026-03-14
+
+- **Google 로그인 오류 수정**: serverClientId를 Proppedia Web Client ID로 교정 (Proptalk Web ID 혼용 문제 해결)
+- **앱 버전 표시 자동화**: package_info_plus 도입, pubspec.yaml에서 자동 읽기 (하드코딩 제거)
+- **웹 푸터 통일**: /app 전체 페이지 푸터를 `© 2026 프롭넷 (PropNet). All rights reserved.` 형식으로 통일
+- **결과화면 UX 개선**: 즐겨찾기/PDF 하단 플로팅 버튼을 상단 헤더 아이콘으로 이동
+- **웹 지번검색 개선**: 번/지 입력 시 법정동 자동 필터링 및 단일 결과 자동 선택
+- **버전 업데이트 스크립트**: `scripts/update_version.py` 추가 (앱+서버 버전 일괄 변경)
+
+### [1.0.2+9] - 2026-03-12
+
+- 버전 업데이트 (빌드 번호 증가)
+
+### [1.0.2+8] - 2026-03-08
+
+- **통합 인증 시스템**: Google Cloud 프로젝트 통일 (846392940969)
+- Google 로그인 전환 (이메일/비밀번호 로그인 제거)
+- 웹/모바일 플랫폼별 로그인 분기 처리
+- 공지사항 팝업 시스템 구현 (앱 + PWA 웹)
+
 ### [1.0.2+7] - 2026-03-01
 
 - 신규 행정구역 토지정보 조회 지원 (VWorld API fallback)

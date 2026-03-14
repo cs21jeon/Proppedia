@@ -6,6 +6,7 @@ import 'package:propedia/presentation/providers/auth_provider.dart';
 import 'package:propedia/presentation/providers/theme_provider.dart';
 import 'package:propedia/presentation/providers/history_provider.dart';
 import 'package:propedia/presentation/providers/favorites_provider.dart';
+import 'package:propedia/presentation/providers/app_info_provider.dart';
 import 'package:propedia/presentation/widgets/common/app_footer.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -298,7 +299,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             leading: const Icon(Icons.info_outline),
             title: const Text('앱 버전'),
             trailing: Text(
-              '1.0.0',
+              ref.watch(appVersionProvider),
               style: TextStyle(
                 color: Colors.grey[600],
               ),
