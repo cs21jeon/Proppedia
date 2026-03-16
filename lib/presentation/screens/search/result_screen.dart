@@ -13,6 +13,7 @@ import 'package:propedia/presentation/providers/favorites_provider.dart';
 import 'package:propedia/presentation/widgets/ads/banner_ad_widget.dart';
 import 'package:propedia/presentation/widgets/common/login_prompt_dialog.dart';
 import 'package:propedia/presentation/widgets/common/loading_progress_indicator.dart';
+import 'package:propedia/presentation/providers/airtable_provider.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   const ResultScreen({super.key});
@@ -219,6 +220,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final pdfState = ref.watch(pdfProvider);
     final areaInfoState = ref.watch(areaInfoProvider);
     final favoritesState = ref.watch(favoritesProvider);
+    final canSaveToAirtable = ref.watch(canSaveToAirtableProvider);
+    final airtableSaveState = ref.watch(airtableSaveProvider);
 
     // 공동주택 여부 확인
     final isMultiUnit = searchState.result?.building?.type == 'multi_unit';
@@ -240,6 +243,28 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       appBar: AppBar(
         title: const Text('검색 결과'),
         actions: [
+          // Airtable 저장 버튼 (권한 있는 사용자만)
+          if (canSaveToAirtable && searchState.status == SearchStatus.success && searchState.result != null)
+            IconButton(
+              icon: airtableSaveState.status == AirtableSaveStatus.saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      airtableSaveState.status == AirtableSaveStatus.success
+                          ? Icons.cloud_done
+                          : Icons.cloud_upload_outlined,
+                      color: airtableSaveState.status == AirtableSaveStatus.success
+                          ? Colors.green
+                          : null,
+                    ),
+              tooltip: 'Airtable에 저장',
+              onPressed: airtableSaveState.status == AirtableSaveStatus.saving
+                  ? null
+                  : () => _saveToAirtable(searchState.result!),
+            ),
           // 즐겨찾기 버튼
           if (searchState.status == SearchStatus.success && searchState.result != null)
             IconButton(
@@ -345,6 +370,29 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         );
       }
     }
+  }
+
+  /// Airtable에 저장
+  Future<void> _saveToAirtable(BuildingSearchResponse result) async {
+    final areaInfoState = ref.read(areaInfoProvider);
+    final areaInfo = areaInfoState.status == SearchStatus.success ? areaInfoState.areaInfo : null;
+
+    final success = await ref.read(airtableSaveProvider.notifier).saveToAirtable(
+      result,
+      selectedDong: _selectedDong,
+      selectedHo: _selectedHo,
+      areaInfo: areaInfo,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success ? 'Airtable에 저장되었습니다' : '저장 실패: ${ref.read(airtableSaveProvider).errorMessage ?? "오류"}'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ),
+    );
   }
 
   /// PDF 옵션 Bottom Sheet

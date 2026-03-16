@@ -40,6 +40,7 @@ lib/
 │   │       ├── history_api.dart       # 검색기록 API
 │   │       ├── map_api.dart           # 지도 API
 │   │       ├── naver_map_api.dart     # 네이버 지도 API
+│   │       ├── airtable_api.dart      # Airtable 저장 API (권한 보호)
 │   │       ├── property_api.dart      # 매물 API ★
 │   │       └── user_api.dart          # 사용자 API
 │   ├── dto/
@@ -66,7 +67,8 @@ lib/
 │
 ├── presentation/                      # UI 레이어
 │   ├── providers/
-│   │   ├── auth_provider.dart         # 인증 상태 관리
+│   │   ├── airtable_provider.dart     # Airtable 저장 상태 (권한 기반)
+│   │   ├── auth_provider.dart         # 인증 상태 관리 + 권한 Provider
 │   │   ├── building_provider.dart     # 건축물 검색 상태
 │   │   ├── favorites_provider.dart    # 즐겨찾기 상태
 │   │   ├── history_provider.dart      # 검색기록 상태

@@ -27,6 +27,7 @@ mixin _$User {
   String? get avatarUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_verified')
   bool get isVerified => throw _privateConstructorUsedError;
+  String get role => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
   String? get createdAt => throw _privateConstructorUsedError;
 
@@ -46,6 +47,7 @@ abstract class $UserCopyWith<$Res> {
       String? name,
       @JsonKey(name: 'avatar_url') String? avatarUrl,
       @JsonKey(name: 'is_verified') bool isVerified,
+      String role,
       @JsonKey(name: 'created_at') String? createdAt});
 }
 
@@ -67,6 +69,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? name = freezed,
     Object? avatarUrl = freezed,
     Object? isVerified = null,
+    Object? role = null,
     Object? createdAt = freezed,
   }) {
     return _then(_value.copyWith(
@@ -90,6 +93,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      role: null == role
+          ? _value.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -111,6 +118,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       String? name,
       @JsonKey(name: 'avatar_url') String? avatarUrl,
       @JsonKey(name: 'is_verified') bool isVerified,
+      String role,
       @JsonKey(name: 'created_at') String? createdAt});
 }
 
@@ -129,6 +137,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? name = freezed,
     Object? avatarUrl = freezed,
     Object? isVerified = null,
+    Object? role = null,
     Object? createdAt = freezed,
   }) {
     return _then(_$UserImpl(
@@ -152,6 +161,10 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
               as bool,
+      role: null == role
+          ? _value.role
+          : role // ignore: cast_nullable_to_non_nullable
+              as String,
       createdAt: freezed == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
@@ -162,14 +175,16 @@ class __$$UserImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$UserImpl implements _User {
+class _$UserImpl extends _User {
   const _$UserImpl(
       {required this.id,
       required this.email,
       this.name,
       @JsonKey(name: 'avatar_url') this.avatarUrl,
       @JsonKey(name: 'is_verified') this.isVerified = false,
-      @JsonKey(name: 'created_at') this.createdAt});
+      this.role = 'user',
+      @JsonKey(name: 'created_at') this.createdAt})
+      : super._();
 
   factory _$UserImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserImplFromJson(json);
@@ -187,12 +202,15 @@ class _$UserImpl implements _User {
   @JsonKey(name: 'is_verified')
   final bool isVerified;
   @override
+  @JsonKey()
+  final String role;
+  @override
   @JsonKey(name: 'created_at')
   final String? createdAt;
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, isVerified: $isVerified, createdAt: $createdAt)';
+    return 'User(id: $id, email: $email, name: $name, avatarUrl: $avatarUrl, isVerified: $isVerified, role: $role, createdAt: $createdAt)';
   }
 
   @override
@@ -207,6 +225,7 @@ class _$UserImpl implements _User {
                 other.avatarUrl == avatarUrl) &&
             (identical(other.isVerified, isVerified) ||
                 other.isVerified == isVerified) &&
+            (identical(other.role, role) || other.role == role) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
@@ -214,7 +233,7 @@ class _$UserImpl implements _User {
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-      runtimeType, id, email, name, avatarUrl, isVerified, createdAt);
+      runtimeType, id, email, name, avatarUrl, isVerified, role, createdAt);
 
   @JsonKey(ignore: true)
   @override
@@ -230,14 +249,16 @@ class _$UserImpl implements _User {
   }
 }
 
-abstract class _User implements User {
+abstract class _User extends User {
   const factory _User(
       {required final int id,
       required final String email,
       final String? name,
       @JsonKey(name: 'avatar_url') final String? avatarUrl,
       @JsonKey(name: 'is_verified') final bool isVerified,
+      final String role,
       @JsonKey(name: 'created_at') final String? createdAt}) = _$UserImpl;
+  const _User._() : super._();
 
   factory _User.fromJson(Map<String, dynamic> json) = _$UserImpl.fromJson;
 
@@ -253,6 +274,8 @@ abstract class _User implements User {
   @override
   @JsonKey(name: 'is_verified')
   bool get isVerified;
+  @override
+  String get role;
   @override
   @JsonKey(name: 'created_at')
   String? get createdAt;

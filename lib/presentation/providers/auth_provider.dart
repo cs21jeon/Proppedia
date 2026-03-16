@@ -191,3 +191,9 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthNotifier(authRepository);
 });
+
+// 권한 Provider
+final canSaveToAirtableProvider = Provider<bool>((ref) {
+  final authState = ref.watch(authProvider);
+  return authState.user?.canSaveToAirtable ?? false;
+});

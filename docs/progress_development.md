@@ -2433,6 +2433,19 @@ else if (RegExp(r'[동리읍면]산\s+\d').hasMatch(working)) {
 - **웹 지번검색 개선**: 번/지 입력 시 법정동 자동 필터링 및 단일 결과 자동 선택
 - **버전 업데이트 스크립트**: `scripts/update_version.py` 추가 (앱+서버 버전 일괄 변경)
 
+### [1.0.2+10] - 2026-03-16
+
+- **역할 기반 권한 시스템 (RBAC)**: `app_users.role` 컬럼 추가 (user/editor/admin)
+- **Airtable 저장 기능**: 건물매물/공동주택매물 저장 (editor/admin 권한 전용)
+  - 웹: result.html에 건물 유형별 저장 버튼 (단일건물: domain_add, 공동주택: apartment)
+  - 앱: result_screen.dart AppBar에 조건부 저장 버튼 (미배포)
+  - API: `/app/api/airtable/save/building`, `/multi-unit`, `/general` (인증+권한 보호)
+- **관리자 대시보드 역할 관리**: 사용자 목록에 역할 드롭다운 추가
+- **주소 포맷 개선**: 리 단위 주소 자동 추출, PNU fallback, plat_plc fallback
+- **웹 PNU 검색 지원**: 즐겨찾기/검색기록에서 PNU 파라미터로 결과 조회
+- **Property Manager 웹 UI 제거**: nginx 라우트, 템플릿, 블루프린트 정리
+- **앱 지도 검색 레이아웃**: 지도 영역 확대(4/5), 하단 정보 축소(1/5), 패딩 축소
+
 ### [1.0.2+9] - 2026-03-12
 
 - 버전 업데이트 (빌드 번호 증가)

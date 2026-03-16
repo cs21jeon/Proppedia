@@ -126,16 +126,16 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 지도 영역 (카드 스타일)
+            // 지도 영역
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                 child: Card(
                   clipBehavior: Clip.antiAlias,
-                  elevation: 4,
+                  elevation: 2,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Stack(
                     children: [
@@ -200,9 +200,9 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
 
             // 하단 정보 영역
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
                 child: _buildBottomSection(context, mapState),
               ),
             ),
@@ -253,28 +253,27 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
     // 초기 상태 (안내 메시지)
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
           children: [
-            Icon(Icons.touch_app, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 12),
-            Text(
-              '지도를 탭하여 위치를 선택하세요',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
+            Icon(Icons.touch_app, size: 32, color: Colors.grey[400]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '지도를 탭하여 위치를 선택하세요',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '선택한 위치의 토지/건물 정보를 조회할 수 있습니다',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '선택한 위치의 토지/건물 정보를 조회할 수 있습니다',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[500],
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -334,15 +333,16 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // 주소
+            // 주소 + 지목
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -351,7 +351,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
                     jibunInfo.landTypeName ?? (jibunInfo.landType == '1' ? '대' : '임'),
                     style: const TextStyle(
                       color: AppColors.primary,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -360,66 +360,38 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
                 Expanded(
                   child: Text(
                     jibunInfo.address,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // 도로명 주소
+            // 도로명 + 주용도 (한 줄로)
             if (jibunInfo.roadAddress != null && jibunInfo.roadAddress!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '도로명: ',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+              Text(
+                '도로명: ${jibunInfo.roadAddress!}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 11,
                     ),
-                    Expanded(
-                      child: Text(
-                        jibunInfo.roadAddress!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[800],
-                            ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
 
-            // 주용도
             if (jibunInfo.mainPurpose != null && jibunInfo.mainPurpose!.isNotEmpty)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '주용도: ',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      jibunInfo.mainPurpose!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[800],
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Text(
+                '주용도: ${jibunInfo.mainPurpose!}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                      fontSize: 11,
                     ),
-                  ),
-                ],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
 
             const Spacer(),
@@ -427,14 +399,15 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
             // 조회하기 버튼
             SizedBox(
               width: double.infinity,
+              height: 40,
               child: ElevatedButton.icon(
                 onPressed: () => _onSearchBuilding(jibunInfo),
-                icon: const Icon(Icons.search),
+                icon: const Icon(Icons.search, size: 18),
                 label: const Text('조회하기'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                 ),
               ),
             ),

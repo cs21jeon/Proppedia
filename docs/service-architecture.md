@@ -61,7 +61,7 @@ https://goldenrabbit.biz (port 443)
 | 포트 | 서비스 | Systemd Unit | WorkingDirectory | 역할 |
 |------|--------|-------------|------------------|------|
 | 80/443 | Nginx | `nginx.service` | - | 리버스 프록시 + 정적 파일 |
-| **5000** | PropNet API + Property Manager | `property-manager.service` | `/backend/property-manager/` | 공통 API + 건축물 조회 웹 |
+| **5000** | PropNet API | `property-manager.service` | `/backend/property-manager/` | 공통 API (매물/VWorld/블로그) |
 | **5010** | Proppedia | `proppedia.service` | `/backend/proppedia/` | 앱 API + 관리자 대시보드 |
 | **5020** | PropSheet | `propsheet.service` | `/backend/propsheet/` | 워크스페이스 데이터베이스 관리 |
 | **5030** | Proptalk | `proptalk.service` | `/chat_stt/server/` | STT 음성인식 + 실시간 채팅 |
@@ -84,8 +84,8 @@ https://goldenrabbit.biz (port 443)
 /app/dashboard                  → port 5010          → Proppedia (관리자 대시보드)
 /app/*                          → 정적 파일           → frontend/public/app/ (PWA)
 
-/property-manager/*             → port 5000          → PropNet (Property Manager 웹)
 /propsheet/*                    → port 5020          → PropSheet
+# /property-manager/* → 제거됨 (2026-03-16)
 
 /api/vworld                     → port 5000          → PropNet API (VWorld 프록시)
 /api/vtile                      → port 5000          → PropNet API (타일 프록시)
@@ -138,18 +138,18 @@ Restart=always
 ```
 
 **MultiPrefixMiddleware**로 다중 URL 접두사 처리 + fallback:
-- `/property-manager` → 관리자 건축물 조회 웹
-- `/propsheet` → (레거시, 5020으로 이전됨)
-- `/app` → (레거시, 5010으로 이전됨)
+- `/propsheet` → PropSheet (port 5020과 공유)
+- `/app` → Proppedia 앱 API (port 5010과 공유)
 - fallback → `/api/*`, `/property/*`, `/services` (PropNet API)
+- `/property-manager` → 제거됨 (2026-03-16)
 
 주요 블루프린트:
 ```
 propnet_api.bp     → (no prefix)     PropNet API (매물/VWorld/블로그/뉴스/이미지)
-auth.bp            → (no prefix)     Property Manager 로그인
-search.bp          → /api            건물 검색 (Property Manager)
-property.bp        → /api            건축물 정보 (Property Manager)
-airtable.bp        → /api            Airtable 저장 (Property Manager)
+airtable.bp        → /api            Airtable 저장
+search_map.bp      → /api            지도 검색
+blog.bp            → /api            블로그
+# auth.bp, search.bp, property.bp → 제거됨 (Property Manager UI 제거)
 ```
 
 ### proppedia.service (포트 5010) — Proppedia 앱 API
@@ -166,10 +166,16 @@ Restart=always
 property-manager의 routes/services를 PYTHONPATH로 재사용:
 ```
 app_api.bp         → /api            건축물 검색 API
-app_auth.bp        → /api/auth       Google 인증 (JWT)
+app_auth.bp        → /api/auth       Google 인증 (JWT) + role_required 데코레이터
 app_user_data.bp   → /api/user       즐겨찾기, 검색 기록
-admin_dashboard.bp → (no prefix)     관리자 대시보드
+admin_dashboard.bp → (no prefix)     관리자 대시보드 (사용자 역할 관리 포함)
+airtable (직접등록) → /api/airtable   Airtable 저장 (editor/admin 권한 보호)
 ```
+
+**역할 기반 권한 시스템 (RBAC)**:
+- `app_users.role` 컬럼: `user` (기본) / `editor` (Airtable 저장) / `admin` (전체 관리)
+- `@token_required` + `@role_required('editor', 'admin')` 데코레이터로 API 보호
+- 관리자 대시보드에서 사용자 역할 변경 가능 (`PUT /api/admin/users/<id>/role`)
 
 ### propsheet.service (포트 5020) — PropSheet
 
